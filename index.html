@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="url"], input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .button.danger:hover {
+            box-shadow: 0 10px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .button.small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+            margin: 5px;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .short-url {
+            word-break: break-all;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            color: #155724;
+            margin-top: 10px;
+            padding: 10px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .config-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .config-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        small {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .user-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .links-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .links-table th,
+        .links-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .links-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .links-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .url-cell {
+            max-width: 200px;
+            word-break: break-all;
+            font-size: 14px;
+        }
+
+        .no-links {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .auth-links {
+            margin-top: 20px;
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .logout-btn {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .logout-btn:hover {
+            background: #5a6268;
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 URL Shortener</h1>
+        
+        <!-- Configuration Section (shown only when not logged in) -->
+        <div class="config-section" id="configSection">
+            <h3>Configuration</h3>
+            <div class="form-group">
+                <label for="gasEndpoint">Google Apps Script URL:</label>
+                <input type="url" id="gasEndpoint" placeholder="https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec">
+                <small>Deploy your Google Apps Script as a web app and paste the URL here</small>
+            </div>
+        </div>
+
+        <!-- Authentication Tabs -->
+        <div id="authSection">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('login')">Login</button>
+                <button class="tab-button" onclick="showTab('register')">Register</button>
+            </div>
+
+            <!-- Login Tab -->
+            <div class="tab-content active" id="loginTab">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginIdentifier">Email or Username:</label>
+                        <input type="text" id="loginIdentifier" placeholder="user@example.com or username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                    </div>
+                    
+                    <button type="submit" class="button">Login</button>
+                </form>
+            </div>
+
+            <!-- Register Tab -->
+            <div class="tab-content" id="registerTab">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerEmail">Email:</label>
+                        <input type="email" id="registerEmail" placeholder="user@example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerUsername">Username:</label>
+                        <input type="text" id="registerUsername" placeholder="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerPassword">Password:</label>
+                        <input type="password" id="registerPassword" placeholder="Password" required>
+                    </div>
+                    
+                    <button type="submit" class="button">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Application (shown after login) -->
+        <div id="mainApp" style="display: none;">
+            <div class="user-info" id="userInfo"></div>
+            
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showMainTab('create')">Create URL</button>
+                <button class="tab-button" onclick="showMainTab('manage')">My Links</button>
+            </div>
+
+            <!-- Create URL Tab -->
+            <div class="tab-content active" id="createTab">
+                <form id="urlForm">
+                    <div class="form-group">
+                        <label for="originalUrl">Original URL:</label>
+                        <input type="url" id="originalUrl" placeholder="https://example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customSlug">Custom Short Code (optional):</label>
+                        <input type="text" id="customSlug" placeholder="my-link">
+                        <small>Leave empty to generate a random UUID</small>
+                    </div>
+                    
+                    <button type="submit" class="button">Create Short URL</button>
+                </form>
+            </div>
+
+            <!-- Manage Links Tab -->
+            <div class="tab-content" id="manageTab">
+                <button class="button" onclick="loadUserLinks()">Refresh Links</button>
+                <div id="userLinks"></div>
+            </div>
+
+            <button class="button logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p id="loadingText">Loading...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+
+        <div class="result" id="result">
+            <h3>Your Short URL:</h3>
+            <div class="short-url" id="shortUrl"></div>
+            <button class="button copy-button" id="copyBtn">Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Check if this is a redirect page (accessing a short URL)
+        function checkForRedirect() {
+            const path = window.location.pathname;
+            const pathParts = path.split('/');
+            const shortCode = pathParts[pathParts.length - 1];
+            
+            // If we have a potential short code and it's not the main page
+            if (shortCode && shortCode !== 'index.html' && shortCode !== '') {
+                redirectToOriginalUrl(shortCode);
+                return true;
+            }
+            return false;
+        }
+
+        async function redirectToOriginalUrl(shortCode) {
+            const gasEndpoint = localStorage.getItem('gasEndpoint');
+            if (!gasEndpoint) {
+                document.body.innerHTML = '<div style="text-align: center; margin-top: 50px;"><h2>Error: Google Apps Script endpoint not configured</h2></div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${gasEndpoint}?action=get&shortCode=${encodeURIComponent(shortCode)}`);
+                const data = await response.json();
+                
+                if (data.success && data.originalUrl) {
+                    window.location.href = data.originalUrl;
+                } else {
+                    document.body.innerHTML = '<div style="text-align: center; margin-top: 50px;"><h2>Short URL not found</h2><p>The requested short URL does not exist.</p></div>';
+                }
+            } catch (error) {
+                document.body.innerHTML = '<div style="text-align: center; margin-top: 50px;"><h2>Error</h2><p>Could not retrieve the original URL.</p></div>';
+            }
+        }
+
+        // Initialize the application
+        function initApp() {
+            // Load saved endpoint and user
+            const savedEndpoint = localStorage.getItem('gasEndpoint');
+            if (savedEndpoint) {
+                document.getElementById('gasEndpoint').value = savedEndpoint;
+            }
+
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainApp();
+            }
+
+            // Event listeners
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Register form
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            // URL creation form
+            document.getElementById('urlForm').addEventListener('submit', handleCreateUrl);
+            
+            // Copy button
+            document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const identifier = document.getElementById('loginIdentifier').value;
+            const password = document.getElementById('loginPassword').value;
+            const gasEndpoint = document.getElementById('gasEndpoint').value;
+            
+            if (!gasEndpoint) {
+                showError('Please enter your Google Apps Script URL');
+                return;
+            }
+            
+            localStorage.setItem('gasEndpoint', gasEndpoint);
+            
+            showLoading(true, 'Logging in...');
+            hideMessages();
+            
+            try {
+                const response = await fetch(gasEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=login&identifier=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainApp();
+                    showSuccess('Login successful!');
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('registerEmail').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const gasEndpoint = document.getElementById('gasEndpoint').value;
+            
+            if (!gasEndpoint) {
+                showError('Please enter your Google Apps Script URL');
+                return;
+            }
+            
+            localStorage.setItem('gasEndpoint', gasEndpoint);
+            
+            showLoading(true, 'Creating account...');
+            hideMessages();
+            
+            try {
+                const response = await fetch(gasEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=register&email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Registration successful! Please login with your credentials.');
+                    showTab('login');
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showError(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleCreateUrl(e) {
+            e.preventDefault();
+            
+            const originalUrl = document.getElementById('originalUrl').value;
+            const customSlug = document.getElementById('customSlug').value;
+            const gasEndpoint = localStorage.getItem('gasEndpoint');
+            
+            showLoading(true, 'Creating short URL...');
+            hideMessages();
+            hideResult();
+            
+            try {
+                const response = await fetch(gasEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=create&originalUrl=${encodeURIComponent(originalUrl)}&customSlug=${encodeURIComponent(customSlug)}&userId=${currentUser.id}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+                    const shortUrl = `${baseUrl}/${data.shortCode}`;
+                    showResult(shortUrl);
+                    document.getElementById('urlForm').reset();
+                } else {
+                    showError(data.error || 'Failed to create short URL');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadUserLinks() {
+            const gasEndpoint = localStorage.getItem('gasEndpoint');
+            
+            showLoading(true, 'Loading your links...');
+            hideMessages();
+            
+            try {
+                const response = await fetch(`${gasEndpoint}?action=getUserLinks&userId=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayUserLinks(data.links);
+                } else {
+                    showError(data.error || 'Failed to load links');
+                }
+            } catch (error) {
+                showError('Error loading links: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteLink(shortCode) {
+            if (!confirm('Are you sure you want to delete this link?')) {
+                return;
+            }
+
+            const gasEndpoint = localStorage.getItem('gasEndpoint');
+            
+            showLoading(true, 'Deleting link...');
+            
+            try {
+                const response = await fetch(gasEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=delete&shortCode=${encodeURIComponent(shortCode)}&userId=${currentUser.id}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Link deleted successfully!');
+                    loadUserLinks(); // Refresh the list
+                } else {
+                    showError(data.error || 'Failed to delete link');
+                }
+            } catch (error) {
+                showError('Error deleting link: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayUserLinks(links) {
+            const container = document.getElementById('userLinks');
+            
+            if (!links || links.length === 0) {
+                container.innerHTML = '<div class="no-links">You haven\'t created any links yet.</div>';
+                return;
+            }
+
+            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            
+            let html = `
+                <table class="links-table">
+                    <thead>
+                        <tr>
+                            <th>Short Code</th>
+                            <th>Original URL</th>
+                            <th>Created</th>
+                            <th>Clicks</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            links.forEach(link => {
+                const shortUrl = `${baseUrl}/${link.shortCode}`;
+                const createdDate = new Date(link.created).toLocaleDateString();
+                
+                html += `
+                    <tr>
+                        <td><a href="${shortUrl}" target="_blank">${link.shortCode}</a></td>
+                        <td class="url-cell">${link.originalUrl}</td>
+                        <td>${createdDate}</td>
+                        <td>${link.clicks || 0}</td>
+                        <td>
+                            <button class="button small" onclick="copyToClipboard('${shortUrl}')">Copy</button>
+                            <button class="button small danger" onclick="deleteLink('${link.shortCode}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function showMainApp() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('configSection').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            
+            document.getElementById('userInfo').innerHTML = `
+                <strong>Welcome, ${currentUser.username}!</strong><br>
+                <small>Email: ${currentUser.email}</small>
+            `;
+            
+            loadUserLinks();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('configSection').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+            
+            // Reset forms
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+            document.getElementById('urlForm').reset();
+            
+            hideMessages();
+            hideResult();
+            
+            showTab('login');
+        }
+
+        function showTab(tabName) {
+            // Hide all auth tabs
+            document.querySelectorAll('#authSection .tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('#authSection .tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            hideMessages();
+        }
+
+        function showMainTab(tabName) {
+            // Hide all main tabs
+            document.querySelectorAll('#mainApp .tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('#mainApp .tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            hideMessages();
+            hideResult();
+            
+            if (tabName === 'manage') {
+                loadUserLinks();
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (!text) {
+                text = document.getElementById('shortUrl').textContent;
+            }
+            
+            navigator.clipboard.writeText(text).then(function() {
+                if (event && event.target) {
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    btn.style.background = '#28a745';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 2000);
+                } else {
+                    showSuccess('URL copied to clipboard!');
+                }
+            });
+        }
+
+        function showLoading(show, text = 'Loading...') {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('loadingText').textContent = text;
+            
+            // Disable all forms
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, button');
+                inputs.forEach(input => input.disabled = show);
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        function hideMessages() {
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function showResult(shortUrl) {
+            document.getElementById('shortUrl').textContent = shortUrl;
+            document.getElementById('result').classList.add('show');
+        }
+
+        function hideResult() {
+            document.getElementById('result').classList.remove('show');
+        }
+
+        // Check for redirect on page load, otherwise initialize app
+        if (!checkForRedirect()) {
+            initApp();
+        }
+    </script>
+</body>
+</html>
