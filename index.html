@@ -406,7 +406,7 @@
 
     <script>
         let currentUser = null;
-        const gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
+        let gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
 
         // Check if this is a redirect page (accessing a short URL)
         function checkForRedirect() {
@@ -423,7 +423,6 @@
         }
 
         async function redirectToOriginalUrl(shortCode) {
-            const gasEndpoint = localStorage.getItem('gasEndpoint');
             if (!gasEndpoint) {
                 document.body.innerHTML = '<div style="text-align: center; margin-top: 50px;"><h2>Error: Google Apps Script endpoint not configured</h2></div>';
                 return;
@@ -523,7 +522,6 @@
             const email = document.getElementById('registerEmail').value;
             const username = document.getElementById('registerUsername').value;
             const password = document.getElementById('registerPassword').value;
-            const gasEndpoint = document.getElementById('gasEndpoint').value;
             
             if (!gasEndpoint) {
                 showError('Please enter your Google Apps Script URL');
