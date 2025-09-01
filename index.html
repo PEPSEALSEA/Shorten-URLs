@@ -305,16 +305,6 @@
 <body>
     <div class="container">
         <h1>🔗 URL Shortener</h1>
-        
-        <!-- Configuration Section (shown only when not logged in) -->
-        <div class="config-section" id="configSection">
-            <h3>Configuration</h3>
-            <div class="form-group">
-                <label for="gasEndpoint">Google Apps Script URL:</label>
-                <input type="url" id="gasEndpoint" placeholder="https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec">
-                <small>Deploy your Google Apps Script as a web app and paste the URL here</small>
-            </div>
-        </div>
 
         <!-- Authentication Tabs -->
         <div id="authSection">
@@ -416,6 +406,7 @@
 
     <script>
         let currentUser = null;
+        const gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
 
         // Check if this is a redirect page (accessing a short URL)
         function checkForRedirect() {
@@ -489,7 +480,6 @@
             
             const identifier = document.getElementById('loginIdentifier').value;
             const password = document.getElementById('loginPassword').value;
-            const gasEndpoint = document.getElementById('gasEndpoint').value;
             
             if (!gasEndpoint) {
                 showError('Please enter your Google Apps Script URL');
