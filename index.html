@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,8 +73,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .form-group {
@@ -88,7 +96,10 @@
             font-weight: 600;
         }
 
-        input[type="url"], input[type="text"], input[type="email"], input[type="password"] {
+        input[type="url"],
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
             width: 100%;
             padding: 15px;
             border: 2px solid #e1e5e9;
@@ -162,6 +173,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -214,8 +226,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .config-section {
@@ -251,7 +268,7 @@
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .links-table th,
@@ -302,6 +319,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🔗 URL Shortener</h1>
@@ -320,12 +338,12 @@
                         <label for="loginIdentifier">Email or Username:</label>
                         <input type="text" id="loginIdentifier" placeholder="user@example.com or username" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="loginPassword">Password:</label>
                         <input type="password" id="loginPassword" placeholder="Password" required>
                     </div>
-                    
+
                     <button type="submit" class="button">Login</button>
                 </form>
             </div>
@@ -337,17 +355,17 @@
                         <label for="registerEmail">Email:</label>
                         <input type="email" id="registerEmail" placeholder="user@example.com" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="registerUsername">Username:</label>
                         <input type="text" id="registerUsername" placeholder="username" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="registerPassword">Password:</label>
                         <input type="password" id="registerPassword" placeholder="Password" required>
                     </div>
-                    
+
                     <button type="submit" class="button">Register</button>
                 </form>
             </div>
@@ -356,7 +374,7 @@
         <!-- Main Application (shown after login) -->
         <div id="mainApp" style="display: none;">
             <div class="user-info" id="userInfo"></div>
-            
+
             <div class="tab-buttons">
                 <button class="tab-button active" onclick="showMainTab('create')">Create URL</button>
                 <button class="tab-button" onclick="showMainTab('manage')">My Links</button>
@@ -369,13 +387,13 @@
                         <label for="originalUrl">Original URL:</label>
                         <input type="url" id="originalUrl" placeholder="https://example.com" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="customSlug">Custom Short Code (optional):</label>
                         <input type="text" id="customSlug" placeholder="my-link">
                         <small>Leave empty to generate a random UUID</small>
                     </div>
-                    
+
                     <button type="submit" class="button">Create Short URL</button>
                 </form>
             </div>
@@ -408,13 +426,11 @@
         let currentUser = null;
         let gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
 
-        // Check if this is a redirect page (accessing a short URL)
         function checkForRedirect() {
             const path = window.location.pathname;
             const pathParts = path.split('/');
             const shortCode = pathParts[pathParts.length - 1];
-            
-            // If we have a potential short code and it's not the main page
+
             if (shortCode && shortCode !== 'index.html' && shortCode !== '') {
                 redirectToOriginalUrl(shortCode);
                 return true;
@@ -431,7 +447,7 @@
             try {
                 const response = await fetch(`${gasEndpoint}?action=get&shortCode=${encodeURIComponent(shortCode)}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.originalUrl) {
                     window.location.href = data.originalUrl;
                 } else {
@@ -442,54 +458,43 @@
             }
         }
 
-        // Initialize the application
         function initApp() {
-            // Load saved endpoint and user
-            const savedEndpoint = localStorage.getItem('gasEndpoint');
-            if (savedEndpoint) {
-                document.getElementById('gasEndpoint').value = savedEndpoint;
-            }
-
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 showMainApp();
             }
 
-            // Event listeners
             setupEventListeners();
         }
 
         function setupEventListeners() {
-            // Login form
+
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
-            
-            // Register form
+
             document.getElementById('registerForm').addEventListener('submit', handleRegister);
-            
-            // URL creation form
+
             document.getElementById('urlForm').addEventListener('submit', handleCreateUrl);
-            
-            // Copy button
+
             document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
         }
 
         async function handleLogin(e) {
             e.preventDefault();
-            
+
             const identifier = document.getElementById('loginIdentifier').value;
             const password = document.getElementById('loginPassword').value;
-            
+
             if (!gasEndpoint) {
                 showError('Please enter your Google Apps Script URL');
                 return;
             }
-            
+
             localStorage.setItem('gasEndpoint', gasEndpoint);
-            
+
             showLoading(true, 'Logging in...');
             hideMessages();
-            
+
             try {
                 const response = await fetch(gasEndpoint, {
                     method: 'POST',
@@ -498,9 +503,9 @@
                     },
                     body: `action=login&identifier=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}`
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     currentUser = data.user;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -518,21 +523,21 @@
 
         async function handleRegister(e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('registerEmail').value;
             const username = document.getElementById('registerUsername').value;
             const password = document.getElementById('registerPassword').value;
-            
+
             if (!gasEndpoint) {
                 showError('Please enter your Google Apps Script URL');
                 return;
             }
-            
+
             localStorage.setItem('gasEndpoint', gasEndpoint);
-            
+
             showLoading(true, 'Creating account...');
             hideMessages();
-            
+
             try {
                 const response = await fetch(gasEndpoint, {
                     method: 'POST',
@@ -541,9 +546,9 @@
                     },
                     body: `action=register&email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showSuccess('Registration successful! Please login with your credentials.');
                     showTab('login');
@@ -560,15 +565,15 @@
 
         async function handleCreateUrl(e) {
             e.preventDefault();
-            
+
             const originalUrl = document.getElementById('originalUrl').value;
             const customSlug = document.getElementById('customSlug').value;
             const gasEndpoint = localStorage.getItem('gasEndpoint');
-            
+
             showLoading(true, 'Creating short URL...');
             hideMessages();
             hideResult();
-            
+
             try {
                 const response = await fetch(gasEndpoint, {
                     method: 'POST',
@@ -577,9 +582,9 @@
                     },
                     body: `action=create&originalUrl=${encodeURIComponent(originalUrl)}&customSlug=${encodeURIComponent(customSlug)}&userId=${currentUser.id}`
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
                     const shortUrl = `${baseUrl}/${data.shortCode}`;
@@ -597,14 +602,14 @@
 
         async function loadUserLinks() {
             const gasEndpoint = localStorage.getItem('gasEndpoint');
-            
+
             showLoading(true, 'Loading your links...');
             hideMessages();
-            
+
             try {
                 const response = await fetch(`${gasEndpoint}?action=getUserLinks&userId=${currentUser.id}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     displayUserLinks(data.links);
                 } else {
@@ -623,9 +628,9 @@
             }
 
             const gasEndpoint = localStorage.getItem('gasEndpoint');
-            
+
             showLoading(true, 'Deleting link...');
-            
+
             try {
                 const response = await fetch(gasEndpoint, {
                     method: 'POST',
@@ -634,12 +639,12 @@
                     },
                     body: `action=delete&shortCode=${encodeURIComponent(shortCode)}&userId=${currentUser.id}`
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showSuccess('Link deleted successfully!');
-                    loadUserLinks(); // Refresh the list
+                    loadUserLinks();
                 } else {
                     showError(data.error || 'Failed to delete link');
                 }
@@ -652,14 +657,14 @@
 
         function displayUserLinks(links) {
             const container = document.getElementById('userLinks');
-            
+
             if (!links || links.length === 0) {
                 container.innerHTML = '<div class="no-links">You haven\'t created any links yet.</div>';
                 return;
             }
 
             const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
-            
+
             let html = `
                 <table class="links-table">
                     <thead>
@@ -673,11 +678,11 @@
                     </thead>
                     <tbody>
             `;
-            
+
             links.forEach(link => {
                 const shortUrl = `${baseUrl}/${link.shortCode}`;
                 const createdDate = new Date(link.created).toLocaleDateString();
-                
+
                 html += `
                     <tr>
                         <td><a href="${shortUrl}" target="_blank">${link.shortCode}</a></td>
@@ -691,7 +696,7 @@
                     </tr>
                 `;
             });
-            
+
             html += '</tbody></table>';
             container.innerHTML = html;
         }
@@ -700,66 +705,63 @@
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('configSection').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            
+
             document.getElementById('userInfo').innerHTML = `
                 <strong>Welcome, ${currentUser.username}!</strong><br>
                 <small>Email: ${currentUser.email}</small>
             `;
-            
+
             loadUserLinks();
         }
 
         function logout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
-            
+
             document.getElementById('authSection').style.display = 'block';
             document.getElementById('configSection').style.display = 'block';
             document.getElementById('mainApp').style.display = 'none';
-            
-            // Reset forms
+
             document.getElementById('loginForm').reset();
             document.getElementById('registerForm').reset();
             document.getElementById('urlForm').reset();
-            
+
             hideMessages();
             hideResult();
-            
+
             showTab('login');
         }
 
         function showTab(tabName) {
-            // Hide all auth tabs
+
             document.querySelectorAll('#authSection .tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             document.querySelectorAll('#authSection .tab-button').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
-            // Show selected tab
+
             document.getElementById(tabName + 'Tab').classList.add('active');
             event.target.classList.add('active');
-            
+
             hideMessages();
         }
 
         function showMainTab(tabName) {
-            // Hide all main tabs
+
             document.querySelectorAll('#mainApp .tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             document.querySelectorAll('#mainApp .tab-button').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
-            // Show selected tab
+
             document.getElementById(tabName + 'Tab').classList.add('active');
             event.target.classList.add('active');
-            
+
             hideMessages();
             hideResult();
-            
+
             if (tabName === 'manage') {
                 loadUserLinks();
             }
@@ -769,8 +771,8 @@
             if (!text) {
                 text = document.getElementById('shortUrl').textContent;
             }
-            
-            navigator.clipboard.writeText(text).then(function() {
+
+            navigator.clipboard.writeText(text).then(function () {
                 if (event && event.target) {
                     const btn = event.target;
                     const originalText = btn.textContent;
@@ -789,8 +791,7 @@
         function showLoading(show, text = 'Loading...') {
             document.getElementById('loading').style.display = show ? 'block' : 'none';
             document.getElementById('loadingText').textContent = text;
-            
-            // Disable all forms
+
             const forms = document.querySelectorAll('form');
             forms.forEach(form => {
                 const inputs = form.querySelectorAll('input, button');
@@ -824,10 +825,10 @@
             document.getElementById('result').classList.remove('show');
         }
 
-        // Check for redirect on page load, otherwise initialize app
         if (!checkForRedirect()) {
             initApp();
         }
     </script>
 </body>
+
 </html>
