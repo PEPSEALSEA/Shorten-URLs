@@ -468,6 +468,7 @@
             setupEventListeners();
         }
 
+
         function setupEventListeners() {
 
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
@@ -703,7 +704,6 @@
 
         function showMainApp() {
             document.getElementById('authSection').style.display = 'none';
-            document.getElementById('configSection').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
 
             document.getElementById('userInfo').innerHTML = `
