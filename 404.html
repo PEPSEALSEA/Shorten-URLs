@@ -11,6 +11,13 @@
     <script>
         (function () {
             var gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
+            function showNotFound() {
+                var titleEl = document.getElementById('titleText');
+                var descEl = document.getElementById('descText');
+                if (titleEl) titleEl.textContent = 'Short link not found';
+                if (descEl) descEl.textContent = 'The link you followed doesn\'t exist or has expired.';
+                document.title = 'Link not found';
+            }
             function getShortCode() {
                 var path = window.location.pathname;
                 var parts = path.split('/').filter(Boolean);
@@ -26,21 +33,23 @@
                     .then(function (data) {
                         if (data && data.success && data.originalUrl) {
                             window.location.replace(data.originalUrl);
-                        }
+                        } else { showNotFound(); }
                     })
-                    .catch(function () {})
+                    .catch(function () { showNotFound(); })
             }
             var code = getShortCode();
             if (code) {
                 redirect(code);
+            } else {
+                showNotFound();
             }
         })();
     </script>
 </head>
 <body>
     <div class="box">
-        <h2>Redirecting…</h2>
-        <p>If you are not redirected automatically, the short link may not exist.</p>
+        <h2 id="titleText">Checking link…</h2>
+        <p id="descText">If the short link does not exist, you will see a message.</p>
         <p><a href="./">Go to home</a></p>
     </div>
 </body>
