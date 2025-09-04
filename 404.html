@@ -7,16 +7,24 @@
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fafafa; color: #333; }
         .box { text-align: center; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .progress { position: relative; height: 4px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 12px; }
+        .progress .bar { position: absolute; height: 100%; width: 40%; background: linear-gradient(90deg, #4f46e5, #60a5fa); border-radius: 4px; animation: indeterminate 1.2s infinite; }
+        @keyframes indeterminate { 0% { left: -40%; } 100% { left: 100%; } }
     </style>
     <script>
         (function () {
             var gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
+            function showLoader(show) {
+                var el = document.getElementById('loader');
+                if (el) el.style.display = show ? 'block' : 'none';
+            }
             function showNotFound() {
                 var titleEl = document.getElementById('titleText');
                 var descEl = document.getElementById('descText');
                 if (titleEl) titleEl.textContent = 'Short link not found';
                 if (descEl) descEl.textContent = 'The link you followed doesn\'t exist or has expired.';
                 document.title = 'Link not found';
+                showLoader(false);
             }
             function getShortCode() {
                 var path = window.location.pathname;
@@ -28,6 +36,7 @@
             }
             function redirect(shortCode) {
                 if (!shortCode) return;
+                showLoader(true);
                 fetch(gasEndpoint + '?action=get&shortCode=' + encodeURIComponent(shortCode))
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
@@ -50,6 +59,11 @@
     <div class="box">
         <h2 id="titleText">Checking link…</h2>
         <p id="descText">If the short link does not exist, you will see a message.</p>
+        <div id="loader" aria-hidden="true" style="display: none;">
+            <div class="progress" role="progressbar" aria-label="Loading" aria-busy="true">
+                <div class="bar"></div>
+            </div>
+        </div>
         <p><a href="./">Go to home</a></p>
     </div>
 </body>
