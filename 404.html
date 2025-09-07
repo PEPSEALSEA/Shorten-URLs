@@ -14,6 +14,10 @@
     <script>
         (function () {
             var gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
+            
+            // Simple cache for redirects
+            var redirectCache = {};
+            var CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
             function showLoader(show) {
                 var el = document.getElementById('loader');
                 if (el) el.style.display = show ? 'block' : 'none';
@@ -36,15 +40,43 @@
             }
             function redirect(shortCode) {
                 if (!shortCode) return;
+                
+                // Check cache first
+                var cached = redirectCache[shortCode];
+                if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+                    window.location.replace(cached.url);
+                    return;
+                }
+                
                 showLoader(true);
+                
+                // Use fetch with timeout and retry
+                var timeoutId = setTimeout(function() {
+                    showNotFound();
+                }, 10000); // 10 second timeout
+                
                 fetch(gasEndpoint + '?action=get&shortCode=' + encodeURIComponent(shortCode))
-                    .then(function (r) { return r.json(); })
+                    .then(function (r) { 
+                        clearTimeout(timeoutId);
+                        return r.json(); 
+                    })
                     .then(function (data) {
                         if (data && data.success && data.originalUrl) {
+                            // Cache the successful redirect
+                            redirectCache[shortCode] = {
+                                url: data.originalUrl,
+                                timestamp: Date.now()
+                            };
                             window.location.replace(data.originalUrl);
-                        } else { showNotFound(); }
+                        } else { 
+                            showNotFound(); 
+                        }
                     })
-                    .catch(function () { showNotFound(); })
+                    .catch(function (error) { 
+                        clearTimeout(timeoutId);
+                        console.log('Redirect error:', error);
+                        showNotFound(); 
+                    });
             }
             var code = getShortCode();
             if (code) {

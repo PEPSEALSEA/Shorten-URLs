@@ -400,7 +400,7 @@
 
             <!-- Manage Links Tab -->
             <div class="tab-content" id="manageTab">
-                <button class="button" onclick="loadUserLinks()">Refresh Links</button>
+                <button class="button" onclick="loadUserLinks(true)">Refresh Links</button>
                 <div id="userLinks"></div>
             </div>
 
@@ -425,6 +425,81 @@
     <script>
         let currentUser = null;
         let gasEndpoint = "https://script.google.com/macros/s/AKfycbzfXA8wKylXKUYh4Urke_Dd1xgBo_Sng9ywmjfK9HQ4Bo8tqDQREZUZ9sz_rrRGCpMz/exec";
+        
+        // Cache for API responses
+        const apiCache = new Map();
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        
+        // Request queue to prevent duplicate calls
+        const requestQueue = new Map();
+        
+        // Optimized fetch with caching and retry
+        async function optimizedFetch(url, options = {}, useCache = false, cacheKey = null) {
+            const requestKey = `${url}_${JSON.stringify(options)}`;
+            
+            // Check if request is already in progress
+            if (requestQueue.has(requestKey)) {
+                return requestQueue.get(requestKey);
+            }
+            
+            // Check cache first
+            if (useCache && cacheKey && apiCache.has(cacheKey)) {
+                const cached = apiCache.get(cacheKey);
+                if (Date.now() - cached.timestamp < CACHE_DURATION) {
+                    return cached.data;
+                }
+                apiCache.delete(cacheKey);
+            }
+            
+            const fetchPromise = fetchWithRetry(url, options);
+            requestQueue.set(requestKey, fetchPromise);
+            
+            try {
+                const result = await fetchPromise;
+                
+                // Cache successful responses
+                if (useCache && cacheKey && result.success) {
+                    apiCache.set(cacheKey, {
+                        data: result,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                return result;
+            } finally {
+                requestQueue.delete(requestKey);
+            }
+        }
+        
+        // Fetch with retry mechanism
+        async function fetchWithRetry(url, options = {}, maxRetries = 2) {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        ...options,
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            ...options.headers
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    if (attempt === maxRetries) {
+                        throw error;
+                    }
+                    
+                    // Exponential backoff
+                    const delay = Math.pow(2, attempt) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
 
         function checkForRedirect() {
             const path = window.location.pathname;
@@ -445,8 +520,12 @@
             }
 
             try {
-                const response = await fetch(`${gasEndpoint}?action=get&shortCode=${encodeURIComponent(shortCode)}`);
-                const data = await response.json();
+                const data = await optimizedFetch(
+                    `${gasEndpoint}?action=get&shortCode=${encodeURIComponent(shortCode)}`,
+                    { method: 'GET' },
+                    true,
+                    `redirect_${shortCode}`
+                );
 
                 if (data.success && data.originalUrl) {
                     window.location.href = data.originalUrl;
@@ -500,19 +579,18 @@
             hideMessages();
 
             try {
-                const response = await fetch(gasEndpoint, {
+                const data = await optimizedFetch(gasEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
                     body: `action=login&identifier=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}`
                 });
-
-                const data = await response.json();
 
                 if (data.success) {
                     currentUser = data.user;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // Clear cache on login to ensure fresh data
+                    apiCache.clear();
+                    
                     showMainApp();
                     showSuccess('Login successful!');
                 } else {
@@ -543,15 +621,10 @@
             hideMessages();
 
             try {
-                const response = await fetch(gasEndpoint, {
+                const data = await optimizedFetch(gasEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
                     body: `action=register&email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
                 });
-
-                const data = await response.json();
 
                 if (data.success) {
                     showSuccess('Registration successful! Please login with your credentials.');
@@ -579,21 +652,19 @@
             hideResult();
 
             try {
-                const response = await fetch(gasEndpoint, {
+                const data = await optimizedFetch(gasEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
                     body: `action=create&originalUrl=${encodeURIComponent(originalUrl)}&customSlug=${encodeURIComponent(customSlug)}&userId=${currentUser.id}`
                 });
-
-                const data = await response.json();
 
                 if (data.success) {
                     const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
                     const shortUrl = `${baseUrl}/${data.shortCode}`;
                     showResult(shortUrl);
                     document.getElementById('urlForm').reset();
+                    
+                    // Invalidate user links cache to refresh the list
+                    apiCache.delete(`userLinks_${currentUser.id}`);
                 } else {
                     showError(data.error || 'Failed to create short URL');
                 }
@@ -604,15 +675,29 @@
             }
         }
 
-        async function loadUserLinks() {
+        async function loadUserLinks(forceRefresh = false) {
             const gasEndpoint = localStorage.getItem('gasEndpoint');
+            const cacheKey = `userLinks_${currentUser.id}`;
+
+            // Check cache first unless force refresh
+            if (!forceRefresh) {
+                const cached = apiCache.get(cacheKey);
+                if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+                    displayUserLinks(cached.data.links);
+                    return;
+                }
+            }
 
             showLoading(true, 'Loading your links...');
             hideMessages();
 
             try {
-                const response = await fetch(`${gasEndpoint}?action=getUserLinks&userId=${currentUser.id}`);
-                const data = await response.json();
+                const data = await optimizedFetch(
+                    `${gasEndpoint}?action=getUserLinks&userId=${currentUser.id}`,
+                    { method: 'GET' },
+                    true,
+                    cacheKey
+                );
 
                 if (data.success) {
                     displayUserLinks(data.links);
@@ -636,19 +721,16 @@
             showLoading(true, 'Deleting link...');
 
             try {
-                const response = await fetch(gasEndpoint, {
+                const data = await optimizedFetch(gasEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
                     body: `action=delete&shortCode=${encodeURIComponent(shortCode)}&userId=${currentUser.id}`
                 });
 
-                const data = await response.json();
-
                 if (data.success) {
                     showSuccess('Link deleted successfully!');
-                    loadUserLinks();
+                    // Invalidate cache and force refresh
+                    apiCache.delete(`userLinks_${currentUser.id}`);
+                    loadUserLinks(true);
                 } else {
                     showError(data.error || 'Failed to delete link');
                 }
@@ -723,12 +805,16 @@
                 <small>Email: ${currentUser.email}</small>
             `;
 
+            // Load user links with cache
             loadUserLinks();
         }
 
         function logout() {
             currentUser = null;
             localStorage.removeItem('currentUser');
+            
+            // Clear cache on logout
+            apiCache.clear();
 
             document.getElementById('authSection').style.display = 'block';
             document.getElementById('mainApp').style.display = 'none';
