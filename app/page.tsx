@@ -54,6 +54,7 @@ export default function Home() {
   const [shortUrlResult, setShortUrlResult] = useState("");
   const [userLinks, setUserLinks] = useState<Link[]>([]);
   const [activeQrUrl, setActiveQrUrl] = useState<string | null>(null);
+  const [createMode, setCreateMode] = useState<"url" | "file">("url");
 
   // Form states
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -419,31 +420,57 @@ export default function Home() {
           <div className="tab-content">
             {mainTab === "create" ? (
               <div className="slide-up">
-                <form onSubmit={handleCreateUrl}>
-                  <div className="form-group">
-                    <label htmlFor="originalUrl">Target URL</label>
-                    <input
-                      type="url"
-                      id="originalUrl"
-                      placeholder="https://very-long-url.com/path?query=1"
-                      value={originalUrl}
-                      onChange={(e) => setOriginalUrl(e.target.value)}
-                      disabled={!!selectedFile}
-                      required={!selectedFile}
-                    />
-                  </div>
+                <div className="tab-buttons sub-tabs" style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.02)', padding: '4px' }}>
+                  <button
+                    className={`tab-button ${createMode === "url" ? "active" : ""}`}
+                    onClick={() => {
+                      setCreateMode("url");
+                      setSelectedFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    style={{ padding: '8px', fontSize: '0.85rem' }}
+                  >
+                    Shorten URL
+                  </button>
+                  <button
+                    className={`tab-button ${createMode === "file" ? "active" : ""}`}
+                    onClick={() => {
+                      setCreateMode("file");
+                      setOriginalUrl("");
+                    }}
+                    style={{ padding: '8px', fontSize: '0.85rem' }}
+                  >
+                    Upload File
+                  </button>
+                </div>
 
-                  <div className="form-group">
-                    <label htmlFor="fileInput">Or upload a file to share</label>
-                    <input
-                      type="file"
-                      id="fileInput"
-                      ref={fileInputRef}
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                      className="file-input"
-                    />
-                    {selectedFile && <div className="message success" style={{ marginTop: '8px', padding: '8px' }}>Selected: {selectedFile.name}</div>}
-                  </div>
+                <form onSubmit={handleCreateUrl}>
+                  {createMode === "url" ? (
+                    <div className="form-group slide-up">
+                      <label htmlFor="originalUrl">Target URL</label>
+                      <input
+                        type="url"
+                        id="originalUrl"
+                        placeholder="https://very-long-url.com/path?query=1"
+                        value={originalUrl}
+                        onChange={(e) => setOriginalUrl(e.target.value)}
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div className="form-group slide-up">
+                      <label htmlFor="fileInput">Upload File</label>
+                      <input
+                        type="file"
+                        id="fileInput"
+                        ref={fileInputRef}
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        className="file-input"
+                        required
+                      />
+                      {selectedFile && <div className="message success" style={{ marginTop: '8px', padding: '8px' }}>Selected: {selectedFile.name}</div>}
+                    </div>
+                  )}
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <div className="form-group">
@@ -469,7 +496,7 @@ export default function Home() {
                   </div>
 
                   <button type="submit" className="button" disabled={loading}>
-                    {selectedFile ? 'Upload and Shorten' : 'Shorten Now'}
+                    {createMode === "file" ? 'Upload and Shorten' : 'Shorten Now'}
                   </button>
                 </form>
 

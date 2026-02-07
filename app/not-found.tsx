@@ -7,6 +7,7 @@ export default function NotFound() {
     const [error, setError] = useState("");
     const [isExpired, setIsExpired] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [code, setCode] = useState("");
 
     useEffect(() => {
         const gasEndpoint = getGasEndpoint();
@@ -15,6 +16,7 @@ export default function NotFound() {
 
         let shortCode = segments[segments.length - 1];
         if (shortCode === 'Shorten-URLs') shortCode = '';
+        setCode(shortCode);
 
         if (!shortCode || shortCode === '404' || shortCode === 'index') {
             setLoading(false);
@@ -61,7 +63,7 @@ export default function NotFound() {
                     <div className="loading-state fade-in">
                         <div className="spinner"></div>
                         <h2>Redirecting...</h2>
-                        <p>Finding your destination at light speed</p>
+                        <p>Redirecting to &quot;{code || 'link'}&quot;</p>
                     </div>
                 ) : (
                     <div className="error-state slide-up">
