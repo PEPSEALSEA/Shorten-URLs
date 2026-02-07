@@ -1,4 +1,4 @@
-const SHEET_ID = '1Wxx3TgN2lfJy7lllmPsMEyQ-5b8NsWAWG8_RakYXz54'; 
+const SHEET_ID = '1Wxx3TgN2lfJy7lllmPsMEyQ-5b8NsWAWG8_RakYXz54';
 const USERS_SHEET_NAME = 'Users';
 const URLS_SHEET_NAME = 'URLs';
 
@@ -15,13 +15,13 @@ function doGet(e) {
     }
 
     return ContentService
-      .createTextOutput(JSON.stringify({success: false, error: 'Invalid request'}))
+      .createTextOutput(JSON.stringify({ success: false, error: 'Invalid request' }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     Logger.log('Error in doGet: ' + error.toString());
     return ContentService
-      .createTextOutput(JSON.stringify({success: false, error: 'Server error'}))
+      .createTextOutput(JSON.stringify({ success: false, error: 'Server error' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -41,13 +41,13 @@ function doPost(e) {
     }
 
     return ContentService
-      .createTextOutput(JSON.stringify({success: false, error: 'Invalid request'}))
+      .createTextOutput(JSON.stringify({ success: false, error: 'Invalid request' }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     Logger.log('Error in doPost: ' + error.toString());
     return ContentService
-      .createTextOutput(JSON.stringify({success: false, error: 'Server error'}))
+      .createTextOutput(JSON.stringify({ success: false, error: 'Server error' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -96,7 +96,7 @@ function handleRegister(params) {
 
 function handleLogin(params) {
   try {
-    const identifier = params.identifier; 
+    const identifier = params.identifier;
     const password = params.password;
 
     if (!identifier || !password) {
@@ -111,8 +111,8 @@ function handleLogin(params) {
       const userId = user[0];
       const email = user[1];
       const username = user[2];
-      const realPassword = user[3];        
-      const storedPasswordHash = user[4];  
+      const realPassword = user[3];
+      const storedPasswordHash = user[4];
 
       if (email === identifier || username === identifier) {
 
@@ -143,6 +143,8 @@ function createShortUrl(params) {
     let originalUrl = params.originalUrl;
     const customSlug = params.customSlug;
     const userId = params.userId;
+    const expiryDate = params.expiryDate; // Can be date or datetime string
+    const driveId = params.driveId;
 
     // Clean and prepare URL
     originalUrl = originalUrl.trim();
@@ -172,7 +174,7 @@ function createShortUrl(params) {
     }
 
     const timestamp = new Date();
-    sheet.appendRow([shortCode, originalUrl, userId, timestamp, 0]); 
+    sheet.appendRow([shortCode, originalUrl, userId, timestamp, 0, expiryDate || '', driveId || '']);
 
     return createResponse(true, 'Short URL created successfully', {
       shortCode: shortCode,
@@ -223,12 +225,14 @@ function getUserLinks(userId) {
     const userLinks = [];
 
     for (let i = 1; i < data.length; i++) {
-      if (data[i][2] === userId) { 
+      if (data[i][2] === userId) {
         userLinks.push({
           shortCode: data[i][0],
           originalUrl: data[i][1],
           created: data[i][3],
-          clicks: data[i][4] || 0
+          clicks: data[i][4] || 0,
+          expiryDate: data[i][5],
+          driveId: data[i][6]
         });
       }
     }
@@ -255,8 +259,17 @@ function getOriginalUrl(shortCode) {
         const currentClicks = data[i][4] || 0;
         sheet.getRange(i + 1, 5).setValue(currentClicks + 1);
 
+        const expiryDate = data[i][5];
+        if (expiryDate) {
+          const expiry = new Date(expiryDate);
+          if (expiry < new Date()) {
+            return createResponse(false, 'Link has expired', { expired: true });
+          }
+        }
+
         return createResponse(true, 'URL found', {
-          originalUrl: data[i][1]
+          originalUrl: data[i][1],
+          expiryDate: expiryDate
         });
       }
     }
@@ -304,7 +317,7 @@ function getOrCreateUrlsSheet() {
     }
 
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['Short Code', 'Original URL', 'User ID', 'Created Date', 'Click Count']);
+      sheet.appendRow(['Short Code', 'Original URL', 'User ID', 'Created Date', 'Click Count', 'Expiry Date', 'Drive ID']);
     }
 
     return sheet;
@@ -418,8 +431,8 @@ function getAllUsers() {
         id: data[i][0],
         email: data[i][1],
         username: data[i][2],
-        realPassword: data[i][3],  
-        created: data[i][5]        
+        realPassword: data[i][3],
+        created: data[i][5]
       });
     }
 
@@ -485,7 +498,7 @@ function testUrlValidation() {
     '.example.com',
     'example.com.'
   ];
-  
+
   testUrls.forEach(url => {
     const isValid = isValidUrl(url);
     Logger.log(`URL: "${url}" - Valid: ${isValid}`);

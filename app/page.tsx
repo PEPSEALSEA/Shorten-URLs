@@ -487,7 +487,7 @@ export default function Home() {
                     <div className="form-group">
                       <label htmlFor="expiryDate">Expiry Date (Optional)</label>
                       <input
-                        type="date"
+                        type="datetime-local"
                         id="expiryDate"
                         value={expiryDate}
                         onChange={(e) => setExpiryDate(e.target.value)}
@@ -558,7 +558,7 @@ export default function Home() {
                                   </div>
                                 </details>
                               </td>
-                              <td style={{ fontSize: '0.8rem' }}>{link.expiryDate ? new Date(link.expiryDate).toLocaleDateString() : 'Never'}</td>
+                              <td style={{ fontSize: '0.8rem' }}>{link.expiryDate ? new Date(link.expiryDate).toLocaleString() : 'Never'}</td>
                               <td style={{ textAlign: 'center' }}>{link.clicks}</td>
                               <td>
                                 <div style={{ display: 'flex', gap: '8px' }}>
