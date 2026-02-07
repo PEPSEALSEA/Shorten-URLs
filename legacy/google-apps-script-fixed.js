@@ -38,6 +38,8 @@ function doPost(e) {
       return createShortUrl(e.parameter);
     } else if (action === 'delete') {
       return deleteShortUrl(e.parameter);
+    } else if (action === 'setup') {
+      return initializeSheets();
     }
 
     return ContentService
@@ -285,16 +287,10 @@ function getOriginalUrl(shortCode) {
 function getOrCreateUsersSheet() {
   try {
     const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-    let sheet;
+    let sheet = spreadsheet.getSheetByName(USERS_SHEET_NAME);
 
-    try {
-      sheet = spreadsheet.getSheetByName(USERS_SHEET_NAME);
-    } catch (e) {
+    if (!sheet) {
       sheet = spreadsheet.insertSheet(USERS_SHEET_NAME);
-    }
-
-    if (sheet.getLastRow() === 0) {
-
       sheet.appendRow(['User ID', 'Email', 'Username', 'Real Password', 'Password Hash', 'Created Date']);
     }
 
@@ -308,15 +304,10 @@ function getOrCreateUsersSheet() {
 function getOrCreateUrlsSheet() {
   try {
     const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-    let sheet;
+    let sheet = spreadsheet.getSheetByName(URLS_SHEET_NAME);
 
-    try {
-      sheet = spreadsheet.getSheetByName(URLS_SHEET_NAME);
-    } catch (e) {
+    if (!sheet) {
       sheet = spreadsheet.insertSheet(URLS_SHEET_NAME);
-    }
-
-    if (sheet.getLastRow() === 0) {
       sheet.appendRow(['Short Code', 'Original URL', 'User ID', 'Created Date', 'Click Count', 'Expiry Date', 'Drive ID']);
     }
 
@@ -408,15 +399,19 @@ function createResponse(success, message, data = {}) {
 }
 
 function testSetup() {
+  return initializeSheets();
+}
+
+function initializeSheets() {
   try {
     const usersSheet = getOrCreateUsersSheet();
     const urlsSheet = getOrCreateUrlsSheet();
-    Logger.log('Users sheet access successful - ' + usersSheet.getLastRow() + ' rows');
-    Logger.log('URLs sheet access successful - ' + urlsSheet.getLastRow() + ' rows');
-    return true;
+    return createResponse(true, 'Sheets initialized successfully', {
+      usersRows: usersSheet.getLastRow(),
+      urlsRows: urlsSheet.getLastRow()
+    });
   } catch (error) {
-    Logger.log('Setup test failed: ' + error.toString());
-    return false;
+    return createResponse(false, 'Setup failed: ' + error.toString());
   }
 }
 

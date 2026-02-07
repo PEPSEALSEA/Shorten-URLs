@@ -217,7 +217,11 @@ export default function Home() {
       bodyParams.append("originalUrl", finalUrl);
       bodyParams.append("customSlug", customSlug);
       bodyParams.append("userId", currentUser.id);
-      if (expiryDate) bodyParams.append("expiryDate", expiryDate);
+      if (expiryDate) {
+        // Convert local datetime to ISO string to ensure timezone consistency
+        const isoDate = new Date(expiryDate).toISOString();
+        bodyParams.append("expiryDate", isoDate);
+      }
       if (driveId) bodyParams.append("driveId", driveId);
 
       const data = await optimizedFetch(gasEndpoint, {
@@ -485,7 +489,12 @@ export default function Home() {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="expiryDate">Expiry Date (Optional)</label>
+                      <label htmlFor="expiryDate">
+                        Expiry Date (Optional)
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '6px', fontWeight: 'normal' }}>
+                          [{Intl.DateTimeFormat().resolvedOptions().timeZone}]
+                        </span>
+                      </label>
                       <input
                         type="datetime-local"
                         id="expiryDate"
