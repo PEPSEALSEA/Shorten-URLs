@@ -192,16 +192,29 @@ export default function Home() {
       let driveId = "";
 
       if (selectedFile) {
-        setLoadingText("Uploading to Drive...");
-        const formData = new FormData();
-        formData.append("myFile", selectedFile);
-        formData.append("action", "upload");
-        formData.append("filename", selectedFile.name);
+        setLoadingText("Uploading to Drive (Base64 Mode)...");
 
-        const uploadData = await optimizedFetch(uploadEndpoint, {
-          method: "POST",
-          body: formData,
+        // Convert file to Base64
+        const base64Content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // Strip the data URL prefix (e.g., "data:image/jpeg;base64,")
+            const base64 = result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedFile);
         });
+
+        // Send as base64 string to bypass multipart issues
+        const uploadData = await optimizedFetch(
+          `${uploadEndpoint}?action=upload&filename=${encodeURIComponent(selectedFile.name)}&contentType=${encodeURIComponent(selectedFile.type)}`,
+          {
+            method: "POST",
+            body: base64Content,
+          }
+        );
 
         if (uploadData.success) {
           finalUrl = uploadData.url;

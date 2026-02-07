@@ -50,11 +50,12 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const isMultipart = options.body instanceof FormData;
+            const isPlainString = typeof options.body === 'string';
 
             const response = await fetch(url, {
                 ...options,
                 headers: {
-                    ...(isMultipart ? {} : { 'Content-Type': 'application/x-www-form-urlencoded' }),
+                    ...(isMultipart ? {} : (isPlainString ? { 'Content-Type': 'text/plain' } : { 'Content-Type': 'application/x-www-form-urlencoded' })),
                     ...options.headers
                 }
             });
