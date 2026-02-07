@@ -23,6 +23,10 @@ const CopyIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
 );
 
+const QRIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M7 7h.01"></path><path d="M17 7h.01"></path><path d="M17 17h.01"></path><path d="M7 17h.01"></path></svg>
+);
+
 const DeleteIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
 );
@@ -49,6 +53,7 @@ export default function Home() {
   const [success, setSuccess] = useState("");
   const [shortUrlResult, setShortUrlResult] = useState("");
   const [userLinks, setUserLinks] = useState<Link[]>([]);
+  const [activeQrUrl, setActiveQrUrl] = useState<string | null>(null);
 
   // Form states
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -533,6 +538,9 @@ export default function Home() {
                                   <button className="button small" onClick={() => copyToClipboard(shortUrl)} title="Copy">
                                     <CopyIcon />
                                   </button>
+                                  <button className="button small" onClick={() => setActiveQrUrl(shortUrl)} title="QR Code" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
+                                    <QRIcon />
+                                  </button>
                                   <button className="button small danger" onClick={() => deleteLink(link.shortCode, link.driveId)} title="Delete">
                                     <DeleteIcon />
                                   </button>
@@ -547,6 +555,29 @@ export default function Home() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* QR Modal */}
+      {activeQrUrl && (
+        <div className="modal-overlay" onClick={() => setActiveQrUrl(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setActiveQrUrl(null)}>×</button>
+            <h3 style={{ marginBottom: '8px' }}>QR Code</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Scan to open the short link</p>
+            <div className="qr-container">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(activeQrUrl)}`}
+                alt="QR Code"
+              />
+            </div>
+            <div className="short-url" style={{ fontSize: '0.9rem', padding: '8px' }}>{activeQrUrl}</div>
+            <div className="modal-actions">
+              <button className="button" onClick={() => copyToClipboard(activeQrUrl)}>
+                <CopyIcon /> Copy Link
+              </button>
+            </div>
           </div>
         </div>
       )}
