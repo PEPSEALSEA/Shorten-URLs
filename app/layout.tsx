@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "URL Shortener - Simplify Your Links",
-  description: "Create short, manageable URLs for your long links with ease.",
+  title: "LinkSnap — Premium URL Shortener",
+  description: "Transform long links into powerful, snap-worthy short URLs. Fast, secure, and stylish.",
 };
 
 export default function RootLayout({

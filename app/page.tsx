@@ -18,6 +18,27 @@ interface Link {
   driveId?: string;
 }
 
+// Icons
+const CopyIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+);
+
+const DeleteIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+);
+
+const ExternalIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+);
+
+const LogoutIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+);
+
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
@@ -72,7 +93,7 @@ export default function Home() {
       );
 
       if (data.success) {
-        setUserLinks(data.links);
+        setUserLinks(data.links || []);
       } else {
         setError(data.error || "Failed to load links");
       }
@@ -107,7 +128,7 @@ export default function Home() {
         const user = data.user;
         setCurrentUser(user);
         localStorage.setItem("currentUser", JSON.stringify(user));
-        setSuccess("Login successful!");
+        setSuccess("Welcome back!");
       } else {
         setError(data.error || "Login failed");
       }
@@ -133,7 +154,7 @@ export default function Home() {
       });
 
       if (data.success) {
-        setSuccess("Registration successful! Please login.");
+        setSuccess("Account created! Please login.");
         setAuthTab("login");
         setRegisterEmail("");
         setRegisterUsername("");
@@ -164,9 +185,8 @@ export default function Home() {
       let finalUrl = originalUrl;
       let driveId = "";
 
-      // 1. Upload file if selected
       if (selectedFile) {
-        setLoadingText("Uploading file to Google Drive...");
+        setLoadingText("Uploading to Drive...");
         const formData = new FormData();
         formData.append("myFile", selectedFile);
         formData.append("action", "upload");
@@ -185,8 +205,7 @@ export default function Home() {
         }
       }
 
-      // 2. Create Short URL
-      setLoadingText("Creating short URL...");
+      setLoadingText("Shortening URL...");
       const bodyParams = new URLSearchParams();
       bodyParams.append("action", "create");
       bodyParams.append("originalUrl", finalUrl);
@@ -202,7 +221,6 @@ export default function Home() {
 
       if (data.success) {
         const baseUrl = window.location.origin;
-        // Check if we are on GitHub Pages or if the pathname includes the project name
         const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
         const shortUrl = hasSubpath
           ? `${baseUrl}/Shorten-URLs/${data.shortCode}`
@@ -215,6 +233,7 @@ export default function Home() {
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         invalidateCache(`userLinks_${currentUser.id}`);
+        setSuccess("Short URL generated successfully!");
       } else {
         setError(data.error || "Failed to create short URL");
       }
@@ -231,34 +250,32 @@ export default function Home() {
     const gasEndpoint = getGasEndpoint();
     const uploadEndpoint = getUploadEndpoint();
 
-    showLoading(true, "Deleting link...");
+    showLoading(true, "Deleting...");
 
     try {
-      // 1. Delete file from Google Drive if it exists
       if (driveId) {
-        setLoadingText("Deleting file from Google Drive...");
+        setLoadingText("Removing file...");
         await optimizedFetch(uploadEndpoint, {
           method: "POST",
           body: `action=archiveFiles&driveIds=${JSON.stringify([driveId])}`,
         });
       }
 
-      // 2. Delete URL entry from database
-      setLoadingText("Deleting URL entry...");
+      setLoadingText("Removing link...");
       const data = await optimizedFetch(gasEndpoint, {
         method: "POST",
         body: `action=delete&shortCode=${encodeURIComponent(shortCode)}&userId=${currentUser.id}`,
       });
 
       if (data.success) {
-        setSuccess("Link deleted successfully!");
+        setSuccess("Link deleted");
         invalidateCache(`userLinks_${currentUser.id}`);
         loadUserLinks(true);
       } else {
         setError(data.error || "Failed to delete link");
       }
     } catch (err: unknown) {
-      setError("Error deleting link: " + (err instanceof Error ? err.message : String(err)));
+      setError("Error deleting: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       showLoading(false);
     }
@@ -268,21 +285,22 @@ export default function Home() {
     setCurrentUser(null);
     localStorage.removeItem("currentUser");
     setUserLinks([]);
-    setSuccess("Logged out successfully");
+    setSuccess("Goodbye!");
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert("Copied to clipboard!");
+      setSuccess("Copied to clipboard!");
+      setTimeout(() => setSuccess(""), 3000);
     });
   };
 
   return (
     <div className="container">
-      <h1>🔗 URL Shortener</h1>
+      <h1>🔗 LinkSnap</h1>
 
       {!currentUser ? (
-        <div id="authSection">
+        <div id="authSection" className="fade-in">
           <div className="tab-buttons">
             <button
               className={`tab-button ${authTab === "login" ? "active" : ""}`}
@@ -298,41 +316,39 @@ export default function Home() {
             </button>
           </div>
 
-          {authTab === "login" ? (
-            <div className="tab-content">
+          <div className="tab-content">
+            {authTab === "login" ? (
               <form onSubmit={handleLogin}>
                 <div className="form-group">
-                  <label htmlFor="loginIdentifier">Email or Username:</label>
+                  <label htmlFor="loginIdentifier">Email or Username</label>
                   <input
                     type="text"
                     id="loginIdentifier"
-                    placeholder="user@example.com or username"
+                    placeholder="Enter your email or username"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="loginPassword">Password:</label>
+                  <label htmlFor="loginPassword">Password</label>
                   <input
                     type="password"
                     id="loginPassword"
-                    placeholder="Password"
+                    placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
                   />
                 </div>
                 <button type="submit" className="button" disabled={loading}>
-                  Login
+                  Sign In
                 </button>
               </form>
-            </div>
-          ) : (
-            <div className="tab-content">
+            ) : (
               <form onSubmit={handleRegister}>
                 <div className="form-group">
-                  <label htmlFor="registerEmail">Email:</label>
+                  <label htmlFor="registerEmail">Email</label>
                   <input
                     type="email"
                     id="registerEmail"
@@ -343,38 +359,41 @@ export default function Home() {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="registerUsername">Username:</label>
+                  <label htmlFor="registerUsername">Username</label>
                   <input
                     type="text"
                     id="registerUsername"
-                    placeholder="username"
+                    placeholder="johndoe"
                     value={registerUsername}
                     onChange={(e) => setRegisterUsername(e.target.value)}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="registerPassword">Password:</label>
+                  <label htmlFor="registerPassword">Password</label>
                   <input
                     type="password"
                     id="registerPassword"
-                    placeholder="Password"
+                    placeholder="••••••••"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
                   />
                 </div>
                 <button type="submit" className="button" disabled={loading}>
-                  Register
+                  Create Account
                 </button>
               </form>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ) : (
-        <div id="mainApp">
+        <div id="mainApp" className="fade-in">
           <div className="user-info">
-            Welcome, <strong>{currentUser.username}</strong> ({currentUser.email})
+            <span>Logged in as <strong>{currentUser.username}</strong></span>
+            <button className="button logout-btn small" onClick={logout}>
+              <LogoutIcon /> Logout
+            </button>
           </div>
 
           <div className="tab-buttons">
@@ -382,7 +401,7 @@ export default function Home() {
               className={`tab-button ${mainTab === "create" ? "active" : ""}`}
               onClick={() => setMainTab("create")}
             >
-              Create URL
+              Shorten URL
             </button>
             <button
               className={`tab-button ${mainTab === "manage" ? "active" : ""}`}
@@ -392,144 +411,150 @@ export default function Home() {
             </button>
           </div>
 
-          {mainTab === "create" ? (
-            <div className="tab-content">
-              <form onSubmit={handleCreateUrl}>
-                <div className="form-group">
-                  <label htmlFor="originalUrl">Original URL (or select a file below):</label>
-                  <input
-                    type="text"
-                    id="originalUrl"
-                    placeholder="https://example.com"
-                    value={originalUrl}
-                    onChange={(e) => setOriginalUrl(e.target.value)}
-                    disabled={!!selectedFile}
-                    required={!selectedFile}
-                  />
-                </div>
+          <div className="tab-content">
+            {mainTab === "create" ? (
+              <div className="slide-up">
+                <form onSubmit={handleCreateUrl}>
+                  <div className="form-group">
+                    <label htmlFor="originalUrl">Target URL</label>
+                    <input
+                      type="url"
+                      id="originalUrl"
+                      placeholder="https://very-long-url.com/path?query=1"
+                      value={originalUrl}
+                      onChange={(e) => setOriginalUrl(e.target.value)}
+                      disabled={!!selectedFile}
+                      required={!selectedFile}
+                    />
+                  </div>
 
-                <div className="form-group">
-                  <label htmlFor="fileInput">Upload File (Alternative to URL):</label>
-                  <input
-                    type="file"
-                    id="fileInput"
-                    ref={fileInputRef}
-                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    style={{ padding: '10px' }}
-                  />
-                  {selectedFile && <small style={{ color: 'var(--primary)' }}>File selected: {selectedFile.name}</small>}
-                </div>
+                  <div className="form-group">
+                    <label htmlFor="fileInput">Or upload a file to share</label>
+                    <input
+                      type="file"
+                      id="fileInput"
+                      ref={fileInputRef}
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                      className="file-input"
+                    />
+                    {selectedFile && <div className="message success" style={{ marginTop: '8px', padding: '8px' }}>Selected: {selectedFile.name}</div>}
+                  </div>
 
-                <div className="form-group">
-                  <label htmlFor="customSlug">Custom Short Code (optional):</label>
-                  <input
-                    type="text"
-                    id="customSlug"
-                    placeholder="my-link"
-                    value={customSlug}
-                    onChange={(e) => setCustomSlug(e.target.value)}
-                  />
-                </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group">
+                      <label htmlFor="customSlug">Custom Slack (Optional)</label>
+                      <input
+                        type="text"
+                        id="customSlug"
+                        placeholder="my-link"
+                        value={customSlug}
+                        onChange={(e) => setCustomSlug(e.target.value)}
+                      />
+                    </div>
 
-                <div className="form-group">
-                  <label htmlFor="expiryDate">Expiry Date (optional):</label>
-                  <input
-                    type="date"
-                    id="expiryDate"
-                    value={expiryDate}
-                    onChange={(e) => setExpiryDate(e.target.value)}
-                  />
-                </div>
+                    <div className="form-group">
+                      <label htmlFor="expiryDate">Expiry Date (Optional)</label>
+                      <input
+                        type="date"
+                        id="expiryDate"
+                        value={expiryDate}
+                        onChange={(e) => setExpiryDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-                <button type="submit" className="button" disabled={loading}>
-                  {selectedFile ? 'Upload and Create Link' : 'Create Short URL'}
-                </button>
-              </form>
-
-              {shortUrlResult && (
-                <div className="result">
-                  <h3>Your Short URL:</h3>
-                  <div className="short-url">{shortUrlResult}</div>
-                  <button className="button" onClick={() => copyToClipboard(shortUrlResult)}>
-                    Copy to Clipboard
+                  <button type="submit" className="button" disabled={loading}>
+                    {selectedFile ? 'Upload and Shorten' : 'Shorten Now'}
                   </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="tab-content">
-              <button className="button" onClick={() => loadUserLinks(true)} disabled={loading} style={{ width: "auto", marginBottom: "20px" }}>
-                Refresh Links
-              </button>
+                </form>
 
-              <div className="links-table-container">
-                {userLinks.length === 0 ? (
-                  <div className="no-links">You haven&apos;t created any links yet.</div>
-                ) : (
-                  <table className="links-table">
-                    <thead>
-                      <tr>
-                        <th>Short Code</th>
-                        <th>Original URL</th>
-                        <th>Expires</th>
-                        <th>Clicks</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {userLinks.map((link) => {
-                        const baseUrl = window.location.origin;
-                        const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
-                        const shortUrl = hasSubpath
-                          ? `${baseUrl}/Shorten-URLs/${link.shortCode}`
-                          : `${baseUrl}/${link.shortCode}`;
-
-                        const isExpired = link.expiryDate && new Date(link.expiryDate) < new Date();
-
-                        return (
-                          <tr key={link.shortCode} style={{ opacity: isExpired ? 0.6 : 1 }}>
-                            <td>
-                              <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: isExpired ? "#999" : "var(--primary)", fontWeight: "600" }}>
-                                {link.shortCode}
-                              </a>
-                            </td>
-                            <td className="url-cell">
-                              <details>
-                                <summary>{link.originalUrl.length > 30 ? link.originalUrl.substring(0, 30) + "..." : link.originalUrl}</summary>
-                                <div style={{ marginTop: "8px", wordBreak: "break-all" }}>{link.originalUrl}</div>
-                                {link.driveId && <div style={{ fontSize: '10px', color: '#888' }}>Drive File: {link.driveId}</div>}
-                              </details>
-                            </td>
-                            <td>{link.expiryDate ? new Date(link.expiryDate).toLocaleDateString() : 'Never'}</td>
-                            <td>{link.clicks}</td>
-                            <td>
-                              <button className="button small" onClick={() => copyToClipboard(shortUrl)}>
-                                Copy
-                              </button>
-                              <button className="button small danger" onClick={() => deleteLink(link.shortCode, link.driveId)}>
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                {shortUrlResult && (
+                  <div className="result">
+                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Your Short Link</h3>
+                    <div className="short-url">{shortUrlResult}</div>
+                    <button className="button" onClick={() => copyToClipboard(shortUrlResult)}>
+                      <CopyIcon /> Copy to Clipboard
+                    </button>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="slide-up">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                  <button className="button small" onClick={() => loadUserLinks(true)} disabled={loading}>
+                    <RefreshIcon /> Refresh
+                  </button>
+                </div>
 
-          <button className="button logout-btn" onClick={logout}>
-            Logout
-          </button>
+                <div className="links-table-container">
+                  {userLinks.length === 0 ? (
+                    <div className="no-links">No links found. Start shortening!</div>
+                  ) : (
+                    <table className="links-table">
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Destination</th>
+                          <th>Expires</th>
+                          <th>Clicks</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userLinks.map((link) => {
+                          const baseUrl = window.location.origin;
+                          const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
+                          const shortUrl = hasSubpath
+                            ? `${baseUrl}/Shorten-URLs/${link.shortCode}`
+                            : `${baseUrl}/${link.shortCode}`;
+
+                          const isExpired = link.expiryDate && new Date(link.expiryDate) < new Date();
+
+                          return (
+                            <tr key={link.shortCode} style={{ opacity: isExpired ? 0.5 : 1 }}>
+                              <td>
+                                <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: "600", textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  {link.shortCode} <ExternalIcon />
+                                </a>
+                              </td>
+                              <td className="url-cell">
+                                <details>
+                                  <summary>{link.originalUrl.length > 20 ? link.originalUrl.substring(0, 20) + "..." : link.originalUrl}</summary>
+                                  <div style={{ padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginTop: '4px', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                                    {link.originalUrl}
+                                    {link.driveId && <div style={{ color: 'var(--secondary)', marginTop: '4px' }}>Drive File</div>}
+                                  </div>
+                                </details>
+                              </td>
+                              <td style={{ fontSize: '0.8rem' }}>{link.expiryDate ? new Date(link.expiryDate).toLocaleDateString() : 'Never'}</td>
+                              <td style={{ textAlign: 'center' }}>{link.clicks}</td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button className="button small" onClick={() => copyToClipboard(shortUrl)} title="Copy">
+                                    <CopyIcon />
+                                  </button>
+                                  <button className="button small danger" onClick={() => deleteLink(link.shortCode, link.driveId)} title="Delete">
+                                    <DeleteIcon />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {loading && (
         <div className="loading">
           <div className="spinner"></div>
-          <p>{loadingText}</p>
+          <p style={{ color: 'var(--text)', fontWeight: '500' }}>{loadingText}</p>
         </div>
       )}
 

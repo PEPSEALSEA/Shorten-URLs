@@ -10,14 +10,9 @@ export default function NotFound() {
 
     useEffect(() => {
         const gasEndpoint = getGasEndpoint();
-
-        // Get the short code from the URL path
-        // On GitHub Pages, the path is /Shorten-URLs/code/ or /Shorten-URLs/code
         const path = window.location.pathname;
         const segments = path.split('/').filter(Boolean);
 
-        // The short code is usually the last segment
-        // But we avoid 'Shorten-URLs' if that's the only segment
         let shortCode = segments[segments.length - 1];
         if (shortCode === 'Shorten-URLs') shortCode = '';
 
@@ -35,7 +30,6 @@ export default function NotFound() {
                 const data = await response.json();
 
                 if (data.success && data.originalUrl) {
-                    // Expiry check
                     if (data.expiryDate) {
                         const expiry = new Date(data.expiryDate);
                         if (expiry < new Date()) {
@@ -45,7 +39,6 @@ export default function NotFound() {
                             return;
                         }
                     }
-                    // Perform redirection
                     window.location.replace(data.originalUrl);
                 } else {
                     setError(data.error || "Short link not found");
@@ -62,65 +55,79 @@ export default function NotFound() {
     }, []);
 
     return (
-        <div style={{
-            display: 'flex',
-            height: '100vh',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            fontFamily: 'sans-serif',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            padding: '20px'
-        }}>
-            <div style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                padding: '40px',
-                borderRadius: '20px',
-                textAlign: 'center',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-                color: '#333',
-                maxWidth: '400px',
-                width: '100%'
-            }}>
+        <div className="not-found-wrapper">
+            <div className="container">
                 {loading ? (
-                    <>
-                        <h1 style={{ fontSize: '48px', marginBottom: '10px' }}>🔗</h1>
-                        <h2 style={{ marginBottom: '10px' }}>Redirecting...</h2>
+                    <div className="loading-state fade-in">
                         <div className="spinner"></div>
-                        <p style={{ color: '#666' }}>Finding your destination...</p>
-                    </>
+                        <h2>Redirecting...</h2>
+                        <p>Finding your destination at light speed</p>
+                    </div>
                 ) : (
-                    <>
-                        <h1 style={{ fontSize: '48px', marginBottom: '10px' }}>⚠️</h1>
-                        <h2 style={{ marginBottom: '10px' }}>{isExpired ? "Link Expired" : "Not Found"}</h2>
-                        <p style={{ color: '#666', marginBottom: '30px' }}>{error}. The link may have been deleted or reached its expiration date.</p>
-                        <a href="/Shorten-URLs/" style={{
-                            display: 'inline-block',
-                            padding: '12px 24px',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            color: 'white',
-                            textDecoration: 'none',
-                            borderRadius: '10px',
-                            fontWeight: 'bold'
-                        }}>
-                            Return Home
+                    <div className="error-state slide-up">
+                        <div className="error-icon">{isExpired ? "⌛" : "🛰️"}</div>
+                        <h1>{isExpired ? "Link Expired" : "Lost in Space"}</h1>
+                        <p className="error-message">{error}</p>
+                        <p className="description">The link you&apos;re looking for might have been deleted, expired, or never existed in this timeline.</p>
+                        <a href="/Shorten-URLs/" className="button">
+                            Take Me Home
                         </a>
-                    </>
+                    </div>
                 )}
             </div>
             <style jsx>{`
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      `}</style>
+                .not-found-wrapper {
+                    display: flex;
+                    height: 100vh;
+                    width: 100vw;
+                    align-items: center;
+                    justify-content: center;
+                    background: #020617;
+                    background-image: 
+                        radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 70%),
+                        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+                }
+                .container {
+                    text-align: center;
+                    max-width: 450px;
+                }
+                .error-icon {
+                    font-size: 4rem;
+                    margin-bottom: 1.5rem;
+                }
+                h1 {
+                    margin-bottom: 1rem;
+                }
+                h2 {
+                    color: var(--text);
+                    margin-bottom: 0.5rem;
+                }
+                .error-message {
+                    color: var(--secondary);
+                    font-weight: 600;
+                    font-size: 1.1rem;
+                    margin-bottom: 1rem;
+                }
+                .description {
+                    color: var(--text-muted);
+                    margin-bottom: 2rem;
+                    font-size: 0.95rem;
+                }
+                .spinner {
+                    width: 50px;
+                    height: 50px;
+                    border: 3px solid rgba(99, 102, 241, 0.2);
+                    border-top: 3px solid #6366f1;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 2rem;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                .fade-in { animation: fadeIn 0.5s ease; }
+                .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+            `}</style>
         </div>
     );
 }
