@@ -202,7 +202,7 @@ export default function Home() {
 
       if (data.success) {
         const baseUrl = window.location.origin;
-        const shortUrl = `${baseUrl}/${data.shortCode}`;
+        const shortUrl = `${baseUrl}/Shorten-URLs/${data.shortCode}`;
         setShortUrlResult(shortUrl);
         setOriginalUrl("");
         setCustomSlug("");
@@ -474,7 +474,7 @@ export default function Home() {
                     <tbody>
                       {userLinks.map((link) => {
                         const baseUrl = window.location.origin;
-                        const shortUrl = `${baseUrl}/${link.shortCode}`;
+                        const shortUrl = `${baseUrl}/Shorten-URLs/${link.shortCode}`;
                         const isExpired = link.expiryDate && new Date(link.expiryDate) < new Date();
 
                         return (

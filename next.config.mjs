@@ -4,7 +4,9 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    // Ensure that trailing slashes are handled correctly for GitHub Pages
+    // Set the base path to match your GitHub Pages repository name
+    basePath: '/Shorten-URLs',
+    assetPrefix: '/Shorten-URLs',
     trailingSlash: true,
 };
 
