@@ -202,7 +202,12 @@ export default function Home() {
 
       if (data.success) {
         const baseUrl = window.location.origin;
-        const shortUrl = `${baseUrl}/Shorten-URLs/${data.shortCode}`;
+        // Check if we are on GitHub Pages or if the pathname includes the project name
+        const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
+        const shortUrl = hasSubpath
+          ? `${baseUrl}/Shorten-URLs/${data.shortCode}`
+          : `${baseUrl}/${data.shortCode}`;
+
         setShortUrlResult(shortUrl);
         setOriginalUrl("");
         setCustomSlug("");
@@ -474,7 +479,11 @@ export default function Home() {
                     <tbody>
                       {userLinks.map((link) => {
                         const baseUrl = window.location.origin;
-                        const shortUrl = `${baseUrl}/Shorten-URLs/${link.shortCode}`;
+                        const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
+                        const shortUrl = hasSubpath
+                          ? `${baseUrl}/Shorten-URLs/${link.shortCode}`
+                          : `${baseUrl}/${link.shortCode}`;
+
                         const isExpired = link.expiryDate && new Date(link.expiryDate) < new Date();
 
                         return (
