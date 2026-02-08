@@ -46,7 +46,8 @@ export default function NotFound() {
                     // If it's a Drive file, we show a landing page instead of instant redirect
                     if (data.driveId) {
                         setFileData({
-                            url: data.originalUrl,
+                            // Always use the official Drive viewer for files to see all pages
+                            url: `https://drive.google.com/file/d/${data.driveId}/view`,
                             driveId: data.driveId
                         });
                         setLoading(false);
