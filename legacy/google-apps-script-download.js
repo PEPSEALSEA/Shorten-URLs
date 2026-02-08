@@ -107,10 +107,17 @@ function doPost(e) {
     }
 
     // Check if this is a raw text body upload (simple request)
-    if (action === 'upload' && e.postData && e.postData.contents && typeof e.postData.contents === 'string' && !isMultipart && !postData.action) {
-      // This is likely our new base64 upload
-      var base64Content = e.postData.contents;
-      // Strip data URL prefix if present (though frontend should strip it)
+    // GAS parses application/x-www-form-urlencoded into e.parameter
+    // But for raw text/plain, it stays in e.postData.contents
+    var base64Content = params.content || postData.content || (e.postData ? e.postData.contents : null);
+
+    if (action === 'upload' && base64Content && typeof base64Content === 'string') {
+      // If it originated from application/x-www-form-urlencoded, it might have "content=" prefix
+      if (base64Content.indexOf('content=') === 0) {
+        base64Content = decodeURIComponent(base64Content.substring(8));
+      }
+
+      // Strip data URL prefix if present
       if (base64Content.indexOf('base64,') !== -1) {
         base64Content = base64Content.split('base64,')[1];
       }
@@ -126,14 +133,14 @@ function doPost(e) {
         const file = folder.createFile(blob);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-        return createResponse(true, 'Upload successful (text-mode)', {
+        return createResponse(true, 'Upload successful', {
           driveId: file.getId(),
           url: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
           downloadUrl: file.getDownloadUrl(),
           viewUrl: file.getUrl()
         });
       } catch (e) {
-        return createResponse(false, 'Text-mode upload failed: ' + e.toString());
+        return createResponse(false, 'Upload decoding failed: ' + e.toString());
       }
     }
 

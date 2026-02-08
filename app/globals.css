@@ -530,6 +530,78 @@ input:hover:not(:focus) {
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
 }
 
+.pizza-toppings {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.topping {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: scale(0);
+}
+
+.topping.active {
+    transform: scale(1);
+}
+
+.topping.pepperoni {
+    background: #ef4444;
+}
+
+.topping.pepper {
+    background: #22c55e;
+}
+
+.topping.olive {
+    background: #1e293b;
+}
+
+.topping.mushroom {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.pizza-box {
+    background: #fff;
+    color: #1e293b;
+    padding: 24px;
+    border-radius: 12px;
+    margin-top: 2rem;
+    position: relative;
+    border-top: 4px solid #ef4444;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pizza-box::before {
+    content: "HOT & FRESH";
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: #ef4444;
+    color: white;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    border-radius: 4px;
+}
+
+.pizza-box .short-url {
+    background: #f8fafc;
+    border: 2px dashed #e2e8f0;
+    color: #0f172a;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     .container {

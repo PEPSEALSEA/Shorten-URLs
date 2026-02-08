@@ -113,8 +113,8 @@ export async function fetchWithProgress(url: string, body: any, onProgress: Prog
         xhr.addEventListener("error", () => reject(new Error("Network connection error")));
 
         xhr.open("POST", url);
-        // Using text/plain for base64 data to avoid auto-parsing issues in GAS
-        xhr.setRequestHeader("Content-Type", "text/plain");
+        // Removing explicit Content-Type to avoid triggering CORS preflight.
+        // String bodies default to a simple request in most browsers.
         xhr.send(body);
     });
 }

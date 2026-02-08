@@ -221,12 +221,13 @@ export default function Home() {
           finalUrl = uploadData.url;
           driveId = uploadData.driveId;
           setUploadProgress(100);
+          setSuccess("Pizza is cooked! 🍕 Link ready.");
         } else {
-          throw new Error(uploadData.error || "File upload failed");
+          throw new Error(uploadData.error || "Baking failed. Oven cooling down...");
         }
       }
 
-      setLoadingText("Shortening URL...");
+      setLoadingText("Printing receipt...");
       const bodyParams = new URLSearchParams();
       bodyParams.append("action", "create");
       bodyParams.append("originalUrl", finalUrl);
@@ -510,6 +511,12 @@ export default function Home() {
                           <div className="baking-bar-wrapper">
                             <div className="baking-bar" style={{ width: `${uploadProgress}%` }}></div>
                           </div>
+                          <div className="pizza-toppings">
+                            <div className={`topping pepperoni ${uploadProgress > 20 ? 'active' : ''}`}>🔘</div>
+                            <div className={`topping pepper ${uploadProgress > 40 ? 'active' : ''}`}>🌿</div>
+                            <div className={`topping mushroom ${uploadProgress > 60 ? 'active' : ''}`}>🍄</div>
+                            <div className={`topping olive ${uploadProgress > 80 ? 'active' : ''}`}>🌑</div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -549,13 +556,25 @@ export default function Home() {
                 </form>
 
                 {shortUrlResult && (
-                  <div className="result">
-                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Your Short Link</h3>
-                    <div className="short-url">{shortUrlResult}</div>
-                    <button className="button" onClick={() => copyToClipboard(shortUrlResult)}>
-                      <CopyIcon /> Copy to Clipboard
-                    </button>
-                  </div>
+                  createMode === "file" ? (
+                    <div className="pizza-box">
+                      <h3 style={{ fontSize: '1rem', color: '#1e293b', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>🍱</span> Your File Link (Pizza Box)
+                      </h3>
+                      <div className="short-url">{shortUrlResult}</div>
+                      <button className="button" style={{ background: '#ef4444', color: 'white', marginTop: '12px' }} onClick={() => copyToClipboard(shortUrlResult)}>
+                        <CopyIcon /> Copy Receipt
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="result">
+                      <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Your Short Link</h3>
+                      <div className="short-url">{shortUrlResult}</div>
+                      <button className="button" onClick={() => copyToClipboard(shortUrlResult)}>
+                        <CopyIcon /> Copy to Clipboard
+                      </button>
+                    </div>
+                  )
                 )}
               </div>
             ) : (
