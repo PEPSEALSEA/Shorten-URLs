@@ -152,6 +152,52 @@ body {
     color: var(--text);
 }
 
+/* Tabs */
+.tab-buttons {
+    display: flex;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px;
+    border-radius: 18px;
+    margin-bottom: 2.5rem;
+    border: 1px solid var(--border);
+    gap: 4px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-radius: 14px;
+    transition: var(--transition);
+}
+
+.tab-button:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tab-button.active {
+    background: var(--grad-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+/* Sub-tabs refinement */
+.sub-tabs {
+    width: fit-content;
+    min-width: 200px;
+}
+
+.sub-tabs .tab-button {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+}
+
 /* Main Content Area */
 .app-content {
     flex: 1;
@@ -180,9 +226,23 @@ body {
 /* Grid for Create Section */
 .create-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 60px;
-    align-items: start;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    align-items: stretch;
+}
+
+.main-section,
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Mode Toggle Spacing */
+.create-mode-toggle {
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: flex-start;
 }
 
 /* Original Container (now used for Auth only) */
@@ -227,10 +287,11 @@ input[type="email"],
 input[type="password"],
 input[type="datetime-local"] {
     width: 100%;
-    padding: 16px 20px;
+    padding: 0 24px;
+    height: 60px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 14px;
     color: var(--text);
     font-size: 1.05rem;
     font-family: inherit;
@@ -257,9 +318,9 @@ input:hover:not(:focus) {
     background: var(--grad-primary);
     color: white;
     border: none;
-    padding: 16px 28px;
+    padding: 0 32px;
     border-radius: 14px;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
@@ -268,7 +329,7 @@ input:hover:not(:focus) {
     align-items: center;
     justify-content: center;
     gap: 12px;
-    height: 56px;
+    height: 60px;
 }
 
 .button:hover {

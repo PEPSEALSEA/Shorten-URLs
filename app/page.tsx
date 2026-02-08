@@ -487,28 +487,28 @@ export default function Home() {
                 <p style={{ color: 'var(--text-muted)' }}>Shorten a URL or host a file in seconds.</p>
               </div>
 
-              <div className="tab-buttons sub-tabs" style={{ marginBottom: '30px', background: 'rgba(255,255,255,0.02)', padding: '4px', maxWidth: '300px', marginLeft: '0' }}>
-                <button
-                  className={`tab-button ${createMode === "url" ? "active" : ""}`}
-                  onClick={() => {
-                    setCreateMode("url");
-                    setSelectedFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                  style={{ padding: '8px', fontSize: '0.85rem' }}
-                >
-                  URL
-                </button>
-                <button
-                  className={`tab-button ${createMode === "file" ? "active" : ""}`}
-                  onClick={() => {
-                    setCreateMode("file");
-                    setOriginalUrl("");
-                  }}
-                  style={{ padding: '8px', fontSize: '0.85rem' }}
-                >
-                  File
-                </button>
+              <div className="create-mode-toggle">
+                <div className="tab-buttons sub-tabs">
+                  <button
+                    className={`tab-button ${createMode === "url" ? "active" : ""}`}
+                    onClick={() => {
+                      setCreateMode("url");
+                      setSelectedFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                  >
+                    URL
+                  </button>
+                  <button
+                    className={`tab-button ${createMode === "file" ? "active" : ""}`}
+                    onClick={() => {
+                      setCreateMode("file");
+                      setOriginalUrl("");
+                    }}
+                  >
+                    File
+                  </button>
+                </div>
               </div>
 
               <form onSubmit={handleCreateUrl} className="create-grid">
