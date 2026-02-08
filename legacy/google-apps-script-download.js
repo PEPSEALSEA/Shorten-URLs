@@ -112,12 +112,7 @@ function doPost(e) {
     var base64Content = params.content || postData.content || (e.postData ? e.postData.contents : null);
 
     if (action === 'upload' && base64Content && typeof base64Content === 'string') {
-      // If it originated from application/x-www-form-urlencoded, it might have "content=" prefix
-      if (base64Content.indexOf('content=') === 0) {
-        base64Content = decodeURIComponent(base64Content.substring(8));
-      }
-
-      // Strip data URL prefix if present
+      // Strip data URL prefix if it accidentally leaked through
       if (base64Content.indexOf('base64,') !== -1) {
         base64Content = base64Content.split('base64,')[1];
       }

@@ -87,36 +87,48 @@ export function getUploadEndpoint() {
     return UPLOAD_ENDPOINT;
 }
 
-export async function fetchWithProgress(url: string, body: any, onProgress: ProgressCallback): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+export async function fetchWithProgress(urlBase: string, base64Data: string, onProgress: ProgressCallback): Promise<any> {
+    // Simulated progress since real XHR upload listeners trigger CORS preflight
+    let simulatedPercent = 0;
+    const interval = setInterval(() => {
+        if (simulatedPercent < 90) {
+            simulatedPercent += Math.random() * 10;
+            onProgress(Math.min(90, Math.round(simulatedPercent)));
+        }
+    }, 400);
 
-        xhr.upload.addEventListener("progress", (event) => {
-            if (event.lengthComputable) {
-                const percent = Math.round((event.loaded / event.total) * 100);
-                onProgress(percent);
-            }
+    try {
+        // We move everything to the body to keep the URL simple.
+        // We MUST use url manipulation here to extract params if they were in urlBase
+        const urlObj = new URL(urlBase);
+        const params = new URLSearchParams(urlObj.search);
+
+        // Add the base64 content to the form data
+        params.append("content", base64Data);
+
+        // Fetch using a simple request format to avoid preflight
+        const response = await fetch(urlObj.origin + urlObj.pathname, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: params.toString()
         });
 
-        xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                    resolve(JSON.parse(xhr.responseText));
-                } catch (e) {
-                    resolve({ success: false, error: "Failed to parse server response" });
-                }
-            } else {
-                reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
-            }
-        });
+        clearInterval(interval);
+        onProgress(100);
 
-        xhr.addEventListener("error", () => reject(new Error("Network connection error")));
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
 
-        xhr.open("POST", url);
-        // Removing explicit Content-Type to avoid triggering CORS preflight.
-        // String bodies default to a simple request in most browsers.
-        xhr.send(body);
-    });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        clearInterval(interval);
+        throw error;
+    }
 }
 
 export function clearCache() {
