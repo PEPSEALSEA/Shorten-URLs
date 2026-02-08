@@ -271,7 +271,8 @@ function getOriginalUrl(shortCode) {
 
         return createResponse(true, 'URL found', {
           originalUrl: data[i][1],
-          expiryDate: expiryDate
+          expiryDate: expiryDate,
+          driveId: data[i][6]
         });
       }
     }

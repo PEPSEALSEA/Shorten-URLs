@@ -8,6 +8,7 @@ export default function NotFound() {
     const [isExpired, setIsExpired] = useState(false);
     const [loading, setLoading] = useState(true);
     const [code, setCode] = useState("");
+    const [fileData, setFileData] = useState<{ url: string, driveId: string } | null>(null);
 
     useEffect(() => {
         const gasEndpoint = getGasEndpoint();
@@ -41,7 +42,17 @@ export default function NotFound() {
                             return;
                         }
                     }
-                    window.location.replace(data.originalUrl);
+
+                    // If it's a Drive file, we show a landing page instead of instant redirect
+                    if (data.driveId) {
+                        setFileData({
+                            url: data.originalUrl,
+                            driveId: data.driveId
+                        });
+                        setLoading(false);
+                    } else {
+                        window.location.replace(data.originalUrl);
+                    }
                 } else {
                     setError(data.error || "Short link not found");
                     setLoading(false);
@@ -64,6 +75,25 @@ export default function NotFound() {
                         <div className="spinner"></div>
                         <h2>Redirecting...</h2>
                         <p>Redirecting to &quot;{code || 'link'}&quot;</p>
+                    </div>
+                ) : fileData ? (
+                    <div className="file-box slide-up">
+                        <div className="file-icon">🍱</div>
+                        <h1>File Ready!</h1>
+                        <p className="description">This link points to a private file. How would you like to open it?</p>
+
+                        <div className="file-actions">
+                            <a href={fileData.url} target="_blank" rel="noopener noreferrer" className="button view-button">
+                                👁️ View Full File
+                            </a>
+                            <a href={`https://drive.google.com/uc?export=download&id=${fileData.driveId}`} className="button download-button">
+                                📥 Download Directly
+                            </a>
+                        </div>
+
+                        <p style={{ marginTop: '20px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Direct view is better for multi-page PDFs.
+                        </p>
                     </div>
                 ) : (
                     <div className="error-state slide-up">
@@ -129,6 +159,34 @@ export default function NotFound() {
                 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 .fade-in { animation: fadeIn 0.5s ease; }
                 .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+                .file-box {
+                    background: #fff;
+                    color: #1e293b;
+                    padding: 40px;
+                    border-radius: 20px;
+                    border-top: 5px solid #ef4444;
+                    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                }
+                .file-icon {
+                    font-size: 4rem;
+                    margin-bottom: 1rem;
+                }
+                .file-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    margin-top: 20px;
+                }
+                .view-button {
+                    background: #1e293b !important;
+                    color: white !important;
+                }
+                .download-button {
+                    background: #ef4444 !important;
+                    color: white !important;
+                }
+                .file-box h1 { color: #1e293b; }
             `}</style>
         </div>
     );
