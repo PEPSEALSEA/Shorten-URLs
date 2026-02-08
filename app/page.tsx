@@ -57,6 +57,7 @@ export default function Home() {
   const [createMode, setCreateMode] = useState<"url" | "file">("url");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [activePreset, setActivePreset] = useState("never");
 
   // Form states
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -111,6 +112,24 @@ export default function Home() {
       showLoading(false);
     }
   }, [currentUser]);
+
+  const handlePresetClick = (preset: string) => {
+    setActivePreset(preset);
+    const now = new Date();
+
+    if (preset === "never") {
+      setExpiryDate("");
+    } else if (preset === "1h") {
+      const date = new Date(now.getTime() + 60 * 60 * 1000);
+      setExpiryDate(date.toISOString().slice(0, 16));
+    } else if (preset === "1d") {
+      const date = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      setExpiryDate(date.toISOString().slice(0, 16));
+    } else if (preset === "1w") {
+      const date = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      setExpiryDate(date.toISOString().slice(0, 16));
+    }
+  };
 
   useEffect(() => {
     if (currentUser && mainTab === "manage") {
@@ -256,6 +275,7 @@ export default function Home() {
         setOriginalUrl("");
         setCustomSlug("");
         setExpiryDate("");
+        setActivePreset("never");
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         invalidateCache(`userLinks_${currentUser.id}`);
@@ -522,32 +542,86 @@ export default function Home() {
                     </div>
                   )}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div className="form-group">
-                      <label htmlFor="customSlug">Custom Slack (Optional)</label>
-                      <input
-                        type="text"
-                        id="customSlug"
-                        placeholder="my-link"
-                        value={customSlug}
-                        onChange={(e) => setCustomSlug(e.target.value)}
-                      />
+                  <div className="form-group slide-up">
+                    <label htmlFor="customSlug">Custom Slash (Optional)</label>
+                    <input
+                      type="text"
+                      id="customSlug"
+                      placeholder="e.g. my-awesome-link"
+                      value={customSlug}
+                      onChange={(e) => setCustomSlug(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="freshness-card slide-up">
+                    <div className="freshness-header">
+                      <span className="icon">⏳</span>
+                      <h3>Link Expiry & Freshness</h3>
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor="expiryDate">
-                        Expiry Date (Optional)
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '6px', fontWeight: 'normal' }}>
-                          [{Intl.DateTimeFormat().resolvedOptions().timeZone}]
-                        </span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        id="expiryDate"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                      />
+                    <div className="freshness-presets">
+                      <button
+                        type="button"
+                        className={`preset-btn ${activePreset === "never" ? "active" : ""}`}
+                        onClick={() => handlePresetClick("never")}
+                      >
+                        <span>♾️</span> Never
+                      </button>
+                      <button
+                        type="button"
+                        className={`preset-btn ${activePreset === "1h" ? "active" : ""}`}
+                        onClick={() => handlePresetClick("1h")}
+                      >
+                        <span>⚡</span> 1 Hour
+                      </button>
+                      <button
+                        type="button"
+                        className={`preset-btn ${activePreset === "1d" ? "active" : ""}`}
+                        onClick={() => handlePresetClick("1d")}
+                      >
+                        <span>☀️</span> 1 Day
+                      </button>
+                      <button
+                        type="button"
+                        className={`preset-btn ${activePreset === "1w" ? "active" : ""}`}
+                        onClick={() => handlePresetClick("1w")}
+                      >
+                        <span>📅</span> 1 Week
+                      </button>
+                      <button
+                        type="button"
+                        className={`preset-btn ${activePreset === "custom" ? "active" : ""}`}
+                        onClick={() => setActivePreset("custom")}
+                      >
+                        <span>🛠️</span> Custom
+                      </button>
                     </div>
+
+                    {(activePreset === "custom" || expiryDate) && (
+                      <div className="custom-picker-container fade-in">
+                        <label htmlFor="expiryDate">
+                          Set Exact Expiration Time
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                            [{Intl.DateTimeFormat().resolvedOptions().timeZone}]
+                          </span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          id="expiryDate"
+                          className="custom-datetime-input"
+                          value={expiryDate}
+                          onChange={(e) => {
+                            setExpiryDate(e.target.value);
+                            setActivePreset("custom");
+                          }}
+                        />
+                        {expiryDate && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '8px', fontWeight: '500' }}>
+                            ✨ Expires: {new Date(expiryDate).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" className="button" disabled={loading}>

@@ -131,7 +131,7 @@ function doPost(e) {
         return createResponse(true, 'Upload successful', {
           driveId: file.getId(),
           url: file.getUrl(),
-          directUrl: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
+          directUrl: 'https://drive.google.com/file/d/' + file.getId(),
           downloadUrl: file.getDownloadUrl(),
           viewUrl: file.getUrl()
         });
@@ -163,7 +163,7 @@ function doPost(e) {
         return createResponse(true, 'Upload successful', {
           driveId: file.getId(),
           url: file.getUrl(),
-          directUrl: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
+          directUrl: 'https://drive.google.com/file/d/' + file.getId(),
           downloadUrl: file.getDownloadUrl(),
           viewUrl: file.getUrl()
         });
@@ -217,7 +217,7 @@ function doPost(e) {
 
         return createResponse(true, 'Upload successful', {
           driveId: file.getId(),
-          url: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
+          url: 'https://drive.google.com/file/d/' + file.getId(),
           downloadUrl: file.getDownloadUrl(),
           viewUrl: file.getUrl()
         });
@@ -241,7 +241,7 @@ function doPost(e) {
 
       return createResponse(true, 'Upload successful', {
         driveId: file.getId(),
-        url: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
+        url: 'https://drive.google.com/file/d/' + file.getId(),
         downloadUrl: file.getDownloadUrl(),
         viewUrl: file.getUrl()
       });
@@ -264,7 +264,7 @@ function doPost(e) {
 
             return createResponse(true, 'Upload successful', {
               driveId: file.getId(),
-              url: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
+              url: 'https://drive.google.com/file/d/' + file.getId(),
               downloadUrl: file.getDownloadUrl(),
               viewUrl: file.getUrl()
             });
@@ -296,7 +296,7 @@ function doPost(e) {
 
         return createResponse(true, 'Upload successful', {
           driveId: file.getId(),
-          url: 'https://lh3.googleusercontent.com/u/0/d/' + file.getId(),
+          url: 'https://drive.google.com/file/d/' + file.getId(),
           downloadUrl: file.getDownloadUrl(),
           viewUrl: file.getUrl()
         });
