@@ -55,6 +55,8 @@ export default function Home() {
   const [userLinks, setUserLinks] = useState<Link[]>([]);
   const [activeQrUrl, setActiveQrUrl] = useState<string | null>(null);
   const [createMode, setCreateMode] = useState<"url" | "file">("url");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Form states
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -192,14 +194,14 @@ export default function Home() {
       let driveId = "";
 
       if (selectedFile) {
-        setLoadingText("Uploading to Drive (Base64 Mode)...");
+        setLoadingText("Baking your file...");
+        setUploadProgress(0);
 
         // Convert file to Base64
         const base64Content = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => {
             const result = reader.result as string;
-            // Strip the data URL prefix (e.g., "data:image/jpeg;base64,")
             const base64 = result.split(',')[1];
             resolve(base64);
           };
@@ -207,18 +209,18 @@ export default function Home() {
           reader.readAsDataURL(selectedFile);
         });
 
-        // Send as base64 string to bypass multipart issues
-        const uploadData = await optimizedFetch(
-          `${uploadEndpoint}?action=upload&filename=${encodeURIComponent(selectedFile.name)}&contentType=${encodeURIComponent(selectedFile.type)}`,
-          {
-            method: "POST",
-            body: base64Content,
-          }
-        );
+        // Use XMLHttpRequest via fetchWithProgress for percentage bar
+        const uploadUrl = `${uploadEndpoint}?action=upload&filename=${encodeURIComponent(selectedFile.name)}&contentType=${encodeURIComponent(selectedFile.type)}`;
+
+        const { fetchWithProgress } = await import("@/utils/api");
+        const uploadData = await fetchWithProgress(uploadUrl, base64Content, (percent) => {
+          setUploadProgress(percent);
+        });
 
         if (uploadData.success) {
           finalUrl = uploadData.url;
           driveId = uploadData.driveId;
+          setUploadProgress(100);
         } else {
           throw new Error(uploadData.error || "File upload failed");
         }
@@ -475,17 +477,41 @@ export default function Home() {
                       />
                     </div>
                   ) : (
-                    <div className="form-group slide-up">
-                      <label htmlFor="fileInput">Upload File</label>
-                      <input
-                        type="file"
-                        id="fileInput"
-                        ref={fileInputRef}
-                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                        className="file-input"
-                        required
-                      />
-                      {selectedFile && <div className="message success" style={{ marginTop: '8px', padding: '8px' }}>Selected: {selectedFile.name}</div>}
+                    <div className="pizza-oven-wrapper slide-up">
+                      <div
+                        className={`pizza-oven ${selectedFile ? 'has-file' : ''} ${isDragging ? 'dragging' : ''}`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDragging(false);
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) setSelectedFile(file);
+                        }}
+                      >
+                        <div className="icon">🍕</div>
+                        <h3>The Pizza Oven</h3>
+                        <p>{selectedFile ? `Selected: ${selectedFile.name}` : "Drop your 'ingredients' (files) here or click to browse"}</p>
+                        <input
+                          type="file"
+                          id="fileInput"
+                          ref={fileInputRef}
+                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          required
+                        />
+                      </div>
+
+                      {uploadProgress > 0 && uploadProgress < 100 && (
+                        <div className="baking-container">
+                          <div className="baking-status">
+                            <span>Baking your file...</span>
+                            <span>{uploadProgress}%</span>
+                          </div>
+                          <div className="baking-bar-wrapper">
+                            <div className="baking-bar" style={{ width: `${uploadProgress}%` }}></div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 

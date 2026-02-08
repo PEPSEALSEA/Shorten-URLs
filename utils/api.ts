@@ -9,6 +9,8 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // Request queue to prevent duplicate calls
 const requestQueue = new Map<string, Promise<any>>();
 
+export type ProgressCallback = (percent: number) => void;
+
 export async function optimizedFetch(url: string, options: RequestInit = {}, useCache = false, cacheKey: string | null = null) {
     const requestKey = `${url}_${JSON.stringify(options)}`;
 
@@ -50,12 +52,11 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const isMultipart = options.body instanceof FormData;
-            const isPlainString = typeof options.body === 'string';
 
             const response = await fetch(url, {
                 ...options,
                 headers: {
-                    ...(isMultipart ? {} : (isPlainString ? { 'Content-Type': 'text/plain' } : { 'Content-Type': 'application/x-www-form-urlencoded' })),
+                    ...(isMultipart ? {} : { 'Content-Type': 'application/x-www-form-urlencoded' }),
                     ...options.headers
                 }
             });
@@ -84,6 +85,38 @@ export function getGasEndpoint() {
 
 export function getUploadEndpoint() {
     return UPLOAD_ENDPOINT;
+}
+
+export async function fetchWithProgress(url: string, body: any, onProgress: ProgressCallback): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener("progress", (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                onProgress(percent);
+            }
+        });
+
+        xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    resolve(JSON.parse(xhr.responseText));
+                } catch (e) {
+                    resolve({ success: false, error: "Failed to parse server response" });
+                }
+            } else {
+                reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Network connection error")));
+
+        xhr.open("POST", url);
+        // Using text/plain for base64 data to avoid auto-parsing issues in GAS
+        xhr.setRequestHeader("Content-Type", "text/plain");
+        xhr.send(body);
+    });
 }
 
 export function clearCache() {
