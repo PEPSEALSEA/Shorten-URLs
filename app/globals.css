@@ -17,8 +17,13 @@
     --danger: #ef4444;
     --success: #10b981;
 
+    /* Gradients */
+    --grad-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --grad-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+
     /* Sidebar/Layout */
-    --sidebar-width: 300px;
+    --sidebar-width: 280px;
+    --content-max-width: 1200px;
     --header-height: 80px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -140,23 +145,31 @@ body {
 .user-name {
     display: block;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text);
 }
 
 /* Main Content Area */
 .app-content {
     flex: 1;
     background: var(--background);
-    padding: 40px;
+    padding: 60px;
     overflow-y: auto;
     position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.content-wrapper {
+    width: 100%;
+    max-width: var(--content-max-width);
 }
 
 .content-header {
-    margin-bottom: 40px;
+    margin-bottom: 50px;
 }
 
 .content-header h2 {
@@ -167,8 +180,8 @@ body {
 /* Grid for Create Section */
 .create-grid {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 40px;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 60px;
     align-items: start;
 }
 
@@ -244,9 +257,9 @@ input:hover:not(:focus) {
     background: var(--grad-primary);
     color: white;
     border: none;
-    padding: 18px 32px;
-    border-radius: 16px;
-    font-size: 1.1rem;
+    padding: 16px 28px;
+    border-radius: 14px;
+    font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
@@ -255,6 +268,7 @@ input:hover:not(:focus) {
     align-items: center;
     justify-content: center;
     gap: 12px;
+    height: 56px;
 }
 
 .button:hover {
@@ -283,9 +297,18 @@ input:hover:not(:focus) {
 }
 
 .button.small {
-    padding: 10px 20px;
+    padding: 0 20px;
     font-size: 0.9rem;
     width: auto;
+    height: 40px;
+    border-radius: 10px;
+}
+
+.button.icon-only {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 10px;
 }
 
 .logout-btn {
@@ -343,9 +366,10 @@ input:hover:not(:focus) {
 
 .links-table-container {
     margin-top: 1.5rem;
-    border-radius: 16px;
+    border-radius: 20px;
     border: 1px solid var(--border);
-    overflow: hidden;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.01);
 }
 
 .links-table {
@@ -557,7 +581,7 @@ input:hover:not(:focus) {
     border: 2px dashed var(--border);
     background: rgba(0, 0, 0, 0.4);
     border-radius: 24px;
-    padding: 3rem;
+    padding: 4rem 2rem;
     text-align: center;
     transition: var(--transition);
     cursor: pointer;
@@ -760,7 +784,7 @@ input:hover:not(:focus) {
 }
 
 .preset-btn.active {
-    background: var(--primary-gradient);
+    background: var(--grad-primary);
     border-color: transparent;
     color: white;
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
