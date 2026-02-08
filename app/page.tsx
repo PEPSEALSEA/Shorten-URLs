@@ -341,12 +341,11 @@ export default function Home() {
     });
   };
 
-  return (
-    <div className="container">
-      <h1>🔗 LinkSnap</h1>
-
-      {!currentUser ? (
-        <div id="authSection" className="fade-in">
+  if (!currentUser) {
+    return (
+      <div className="auth-wrapper">
+        <div className="container">
+          <div className="sidebar-brand" style={{ textAlign: 'center', marginBottom: '30px', padding: 0 }}>LinkSnap</div>
           <div className="tab-buttons">
             <button
               className={`tab-button ${authTab === "login" ? "active" : ""}`}
@@ -433,316 +432,338 @@ export default function Home() {
             )}
           </div>
         </div>
-      ) : (
-        <div id="mainApp" className="fade-in">
-          <div className="user-info">
-            <span>Logged in as <strong>{currentUser.username}</strong></span>
-            <button className="button logout-btn small" onClick={logout}>
-              <LogoutIcon /> Logout
-            </button>
+        {loading && (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p style={{ color: 'var(--text)', fontWeight: '500' }}>{loadingText}</p>
           </div>
+        )}
+        {error && <div className="message error">{error}</div>}
+        {success && <div className="message success">{success}</div>}
+      </div>
+    );
+  }
 
-          <div className="tab-buttons">
-            <button
-              className={`tab-button ${mainTab === "create" ? "active" : ""}`}
-              onClick={() => setMainTab("create")}
-            >
-              Shorten URL
-            </button>
-            <button
-              className={`tab-button ${mainTab === "manage" ? "active" : ""}`}
-              onClick={() => setMainTab("manage")}
-            >
-              My Links
-            </button>
+  return (
+    <div className="app-layout fade-in">
+      <aside className="app-sidebar">
+        <div className="sidebar-brand">LinkSnap</div>
+
+        <nav className="sidebar-nav">
+          <button
+            className={`nav-item ${mainTab === "create" ? "active" : ""}`}
+            onClick={() => setMainTab("create")}
+          >
+            <span>🔗</span> Shorten Link
+          </button>
+          <button
+            className={`nav-item ${mainTab === "manage" ? "active" : ""}`}
+            onClick={() => setMainTab("manage")}
+          >
+            <span>📁</span> My Gallery
+          </button>
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="user-badge">
+            <div className="avatar">{currentUser!.username[0].toUpperCase()}</div>
+            <div className="user-details">
+              <span className="user-name">{currentUser!.username}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{currentUser!.email}</span>
+            </div>
           </div>
+          <button className="nav-item logout-btn" onClick={logout}>
+            <LogoutIcon /> Sign Out
+          </button>
+        </div>
+      </aside>
 
-          <div className="tab-content">
-            {mainTab === "create" ? (
-              <div className="slide-up">
-                <div className="tab-buttons sub-tabs" style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.02)', padding: '4px' }}>
-                  <button
-                    className={`tab-button ${createMode === "url" ? "active" : ""}`}
-                    onClick={() => {
-                      setCreateMode("url");
-                      setSelectedFile(null);
-                      if (fileInputRef.current) fileInputRef.current.value = "";
-                    }}
-                    style={{ padding: '8px', fontSize: '0.85rem' }}
-                  >
-                    Shorten URL
-                  </button>
-                  <button
-                    className={`tab-button ${createMode === "file" ? "active" : ""}`}
-                    onClick={() => {
-                      setCreateMode("file");
-                      setOriginalUrl("");
-                    }}
-                    style={{ padding: '8px', fontSize: '0.85rem' }}
-                  >
-                    Upload File
-                  </button>
-                </div>
+      <main className="app-content">
+        {mainTab === "create" ? (
+          <div className="slide-up">
+            <div className="content-header">
+              <h2>Create New Link</h2>
+              <p style={{ color: 'var(--text-muted)' }}>Shorten a URL or host a file in seconds.</p>
+            </div>
 
-                <form onSubmit={handleCreateUrl}>
-                  {createMode === "url" ? (
-                    <div className="form-group slide-up">
-                      <label htmlFor="originalUrl">Target URL</label>
+            <div className="tab-buttons sub-tabs" style={{ marginBottom: '30px', background: 'rgba(255,255,255,0.02)', padding: '4px', maxWidth: '300px', marginLeft: '0' }}>
+              <button
+                className={`tab-button ${createMode === "url" ? "active" : ""}`}
+                onClick={() => {
+                  setCreateMode("url");
+                  setSelectedFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+                style={{ padding: '8px', fontSize: '0.85rem' }}
+              >
+                URL
+              </button>
+              <button
+                className={`tab-button ${createMode === "file" ? "active" : ""}`}
+                onClick={() => {
+                  setCreateMode("file");
+                  setOriginalUrl("");
+                }}
+                style={{ padding: '8px', fontSize: '0.85rem' }}
+              >
+                File
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUrl} className="create-grid">
+              <div className="main-section">
+                {createMode === "url" ? (
+                  <div className="form-group slide-up">
+                    <label htmlFor="originalUrl">Target URL</label>
+                    <input
+                      type="url"
+                      id="originalUrl"
+                      placeholder="https://very-long-url.com/path?query=1"
+                      value={originalUrl}
+                      onChange={(e) => setOriginalUrl(e.target.value)}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="pizza-oven-wrapper slide-up">
+                    <div
+                      className={`pizza-oven ${selectedFile ? 'has-file' : ''} ${isDragging ? 'dragging' : ''}`}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) setSelectedFile(file);
+                      }}
+                    >
+                      <div className="icon">🍕</div>
+                      <h3>The Pizza Oven</h3>
+                      <p>{selectedFile ? `Selected: ${selectedFile.name}` : "Drop your 'ingredients' (files) here or click to browse"}</p>
                       <input
-                        type="url"
-                        id="originalUrl"
-                        placeholder="https://very-long-url.com/path?query=1"
-                        value={originalUrl}
-                        onChange={(e) => setOriginalUrl(e.target.value)}
+                        type="file"
+                        id="fileInput"
+                        ref={fileInputRef}
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                         required
                       />
                     </div>
-                  ) : (
-                    <div className="pizza-oven-wrapper slide-up">
-                      <div
-                        className={`pizza-oven ${selectedFile ? 'has-file' : ''} ${isDragging ? 'dragging' : ''}`}
-                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                        onDragLeave={() => setIsDragging(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDragging(false);
-                          const file = e.dataTransfer.files?.[0];
-                          if (file) setSelectedFile(file);
-                        }}
-                      >
-                        <div className="icon">🍕</div>
-                        <h3>The Pizza Oven</h3>
-                        <p>{selectedFile ? `Selected: ${selectedFile.name}` : "Drop your 'ingredients' (files) here or click to browse"}</p>
-                        <input
-                          type="file"
-                          id="fileInput"
-                          ref={fileInputRef}
-                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                          required
-                        />
-                      </div>
 
-                      {uploadProgress > 0 && uploadProgress < 100 && (
-                        <div className="baking-container">
-                          <div className="baking-status">
-                            <span>Baking your file...</span>
-                            <span>{uploadProgress}%</span>
-                          </div>
-                          <div className="baking-bar-wrapper">
-                            <div className="baking-bar" style={{ width: `${uploadProgress}%` }}></div>
-                          </div>
-                          <div className="pizza-toppings">
-                            <div className={`topping pepperoni ${uploadProgress > 20 ? 'active' : ''}`}>🔘</div>
-                            <div className={`topping pepper ${uploadProgress > 40 ? 'active' : ''}`}>🌿</div>
-                            <div className={`topping mushroom ${uploadProgress > 60 ? 'active' : ''}`}>🍄</div>
-                            <div className={`topping olive ${uploadProgress > 80 ? 'active' : ''}`}>🌑</div>
-                          </div>
+                    {uploadProgress > 0 && uploadProgress < 100 && (
+                      <div className="baking-container">
+                        <div className="baking-status">
+                          <span>Baking your file...</span>
+                          <span>{uploadProgress}%</span>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="form-group slide-up">
-                    <label htmlFor="customSlug">Custom Slash (Optional)</label>
-                    <input
-                      type="text"
-                      id="customSlug"
-                      placeholder="e.g. my-awesome-link"
-                      value={customSlug}
-                      onChange={(e) => setCustomSlug(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="freshness-card slide-up">
-                    <div className="freshness-header">
-                      <span className="icon">⏳</span>
-                      <h3>Link Expiry & Freshness</h3>
-                    </div>
-
-                    <div className="freshness-presets">
-                      <button
-                        type="button"
-                        className={`preset-btn ${activePreset === "never" ? "active" : ""}`}
-                        onClick={() => handlePresetClick("never")}
-                      >
-                        <span>♾️</span> Never
-                      </button>
-                      <button
-                        type="button"
-                        className={`preset-btn ${activePreset === "1h" ? "active" : ""}`}
-                        onClick={() => handlePresetClick("1h")}
-                      >
-                        <span>⚡</span> 1 Hour
-                      </button>
-                      <button
-                        type="button"
-                        className={`preset-btn ${activePreset === "1d" ? "active" : ""}`}
-                        onClick={() => handlePresetClick("1d")}
-                      >
-                        <span>☀️</span> 1 Day
-                      </button>
-                      <button
-                        type="button"
-                        className={`preset-btn ${activePreset === "1w" ? "active" : ""}`}
-                        onClick={() => handlePresetClick("1w")}
-                      >
-                        <span>📅</span> 1 Week
-                      </button>
-                      <button
-                        type="button"
-                        className={`preset-btn ${activePreset === "custom" ? "active" : ""}`}
-                        onClick={() => setActivePreset("custom")}
-                      >
-                        <span>🛠️</span> Custom
-                      </button>
-                    </div>
-
-                    {(activePreset === "custom" || expiryDate) && (
-                      <div className="custom-picker-container fade-in">
-                        <label htmlFor="expiryDate">
-                          Set Exact Expiration Time
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '6px' }}>
-                            [{Intl.DateTimeFormat().resolvedOptions().timeZone}]
-                          </span>
-                        </label>
-                        <input
-                          type="datetime-local"
-                          id="expiryDate"
-                          className="custom-datetime-input"
-                          value={expiryDate}
-                          onChange={(e) => {
-                            setExpiryDate(e.target.value);
-                            setActivePreset("custom");
-                          }}
-                        />
-                        {expiryDate && (
-                          <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '8px', fontWeight: '500' }}>
-                            ✨ Expires: {new Date(expiryDate).toLocaleString()}
-                          </p>
-                        )}
+                        <div className="baking-bar-wrapper">
+                          <div className="baking-bar" style={{ width: `${uploadProgress}%` }}></div>
+                        </div>
+                        <div className="pizza-toppings">
+                          <div className={`topping pepperoni ${uploadProgress > 20 ? 'active' : ''}`}>🔘</div>
+                          <div className={`topping pepper ${uploadProgress > 40 ? 'active' : ''}`}>🌿</div>
+                          <div className={`topping mushroom ${uploadProgress > 60 ? 'active' : ''}`}>🍄</div>
+                          <div className={`topping olive ${uploadProgress > 80 ? 'active' : ''}`}>🌑</div>
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  <button type="submit" className="button" disabled={loading}>
-                    {createMode === "file" ? 'Upload and Shorten' : 'Shorten Now'}
-                  </button>
-                </form>
+                )}
 
                 {shortUrlResult && (
                   createMode === "file" ? (
                     <div className="pizza-box">
                       <h3 style={{ fontSize: '1rem', color: '#1e293b', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>🍱</span> Your File Link (Pizza Box)
+                        <span>🍱</span> Your File Link
                       </h3>
                       <div className="short-url">{shortUrlResult}</div>
-                      <button className="button" style={{ background: '#ef4444', color: 'white', marginTop: '12px' }} onClick={() => copyToClipboard(shortUrlResult)}>
-                        <CopyIcon /> Copy Receipt
+                      <button type="button" className="button" style={{ background: '#ef4444', color: 'white', marginTop: '12px' }} onClick={() => copyToClipboard(shortUrlResult)}>
+                        <CopyIcon /> Copy Link
                       </button>
                     </div>
                   ) : (
                     <div className="result">
                       <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Your Short Link</h3>
                       <div className="short-url">{shortUrlResult}</div>
-                      <button className="button" onClick={() => copyToClipboard(shortUrlResult)}>
+                      <button type="button" className="button" onClick={() => copyToClipboard(shortUrlResult)}>
                         <CopyIcon /> Copy to Clipboard
                       </button>
                     </div>
                   )
                 )}
               </div>
-            ) : (
-              <div className="slide-up">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-                  <button className="button small" onClick={() => loadUserLinks(true)} disabled={loading}>
-                    <RefreshIcon /> Refresh
-                  </button>
+
+              <div className="sidebar-section">
+                <div className="form-group slide-up">
+                  <label htmlFor="customSlug">Custom Slash (Optional)</label>
+                  <input
+                    type="text"
+                    id="customSlug"
+                    placeholder="e.g. my-awesome-link"
+                    value={customSlug}
+                    onChange={(e) => setCustomSlug(e.target.value)}
+                  />
                 </div>
 
-                <div className="links-table-container">
-                  {userLinks.length === 0 ? (
-                    <div className="no-links">No links found. Start shortening!</div>
-                  ) : (
-                    <table className="links-table">
-                      <thead>
-                        <tr>
-                          <th>Code</th>
-                          <th>Destination</th>
-                          <th>Expires</th>
-                          <th>Clicks</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {userLinks.map((link) => {
-                          const baseUrl = window.location.origin;
-                          const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
-                          const shortUrl = hasSubpath
-                            ? `${baseUrl}/Shorten-URLs/${link.shortCode}`
-                            : `${baseUrl}/${link.shortCode}`;
+                <div className="freshness-card slide-up">
+                  <div className="freshness-header">
+                    <span className="icon">⏳</span>
+                    <h3>Expiration Settings</h3>
+                  </div>
 
-                          const isExpired = link.expiryDate && new Date(link.expiryDate) < new Date();
+                  <div className="freshness-presets">
+                    <button
+                      type="button"
+                      className={`preset-btn ${activePreset === "never" ? "active" : ""}`}
+                      onClick={() => handlePresetClick("never")}
+                    >
+                      <span>♾️</span> Never
+                    </button>
+                    <button
+                      type="button"
+                      className={`preset-btn ${activePreset === "1h" ? "active" : ""}`}
+                      onClick={() => handlePresetClick("1h")}
+                    >
+                      <span>⚡</span> 1H
+                    </button>
+                    <button
+                      type="button"
+                      className={`preset-btn ${activePreset === "1d" ? "active" : ""}`}
+                      onClick={() => handlePresetClick("1d")}
+                    >
+                      <span>☀️</span> 1D
+                    </button>
+                    <button
+                      type="button"
+                      className={`preset-btn ${activePreset === "1w" ? "active" : ""}`}
+                      onClick={() => handlePresetClick("1w")}
+                    >
+                      <span>📅</span> 1W
+                    </button>
+                  </div>
 
-                          return (
-                            <tr key={link.shortCode} style={{ opacity: isExpired ? 0.5 : 1 }}>
-                              <td>
-                                <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: "600", textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  {link.shortCode} <ExternalIcon />
-                                </a>
-                              </td>
-                              <td className="url-cell">
-                                <details>
-                                  <summary>{link.originalUrl.length > 20 ? link.originalUrl.substring(0, 20) + "..." : link.originalUrl}</summary>
-                                  <div style={{ padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', marginTop: '4px', fontSize: '0.8rem', wordBreak: 'break-all' }}>
-                                    {link.originalUrl}
-                                    {link.driveId && <div style={{ color: 'var(--secondary)', marginTop: '4px' }}>Drive File</div>}
-                                  </div>
-                                </details>
-                              </td>
-                              <td style={{ fontSize: '0.8rem' }}>{link.expiryDate ? new Date(link.expiryDate).toLocaleString() : 'Never'}</td>
-                              <td style={{ textAlign: 'center' }}>{link.clicks}</td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                  <button className="button small" onClick={() => copyToClipboard(shortUrl)} title="Copy">
-                                    <CopyIcon />
-                                  </button>
-                                  <button className="button small" onClick={() => setActiveQrUrl(shortUrl)} title="QR Code" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
-                                    <QRIcon />
-                                  </button>
-                                  <button className="button small danger" onClick={() => deleteLink(link.shortCode, link.driveId)} title="Delete">
-                                    <DeleteIcon />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  {(activePreset === "custom" || expiryDate) && (
+                    <div className="custom-picker-container fade-in">
+                      <input
+                        type="datetime-local"
+                        id="expiryDate"
+                        className="custom-datetime-input"
+                        value={expiryDate}
+                        onChange={(e) => {
+                          setExpiryDate(e.target.value);
+                          setActivePreset("custom");
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
+
+                <button type="submit" className="button" disabled={loading} style={{ height: '70px', fontSize: '1.2rem' }}>
+                  {createMode === "file" ? 'Cook & Shorten' : 'Shorten Link'}
+                </button>
               </div>
-            )}
+            </form>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="slide-up">
+            <div className="content-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2>My Gallery</h2>
+                <p style={{ color: 'var(--text-muted)' }}>Manage and track your shortened links.</p>
+              </div>
+              <button className="button small" onClick={() => loadUserLinks(true)} disabled={loading}>
+                <RefreshIcon /> Refresh Links
+              </button>
+            </div>
+
+            <div className="links-table-container">
+              {userLinks.length === 0 ? (
+                <div className="no-links" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📁</div>
+                  <h3>No links found yet</h3>
+                  <p>Go to the Create tab to get started!</p>
+                </div>
+              ) : (
+                <table className="links-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Destination</th>
+                      <th>Expires</th>
+                      <th>Clicks</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userLinks.map((link) => {
+                      const baseUrl = window.location.origin;
+                      const hasSubpath = window.location.pathname.includes('/Shorten-URLs');
+                      const shortUrl = hasSubpath
+                        ? `${baseUrl}/Shorten-URLs/${link.shortCode}`
+                        : `${baseUrl}/${link.shortCode}`;
+
+                      const isExpired = link.expiryDate && new Date(link.expiryDate) < new Date();
+
+                      return (
+                        <tr key={link.shortCode} style={{ opacity: isExpired ? 0.5 : 1 }}>
+                          <td>
+                            <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: "700", textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {link.shortCode} <ExternalIcon />
+                            </a>
+                          </td>
+                          <td className="url-cell">
+                            <details>
+                              <summary>{link.originalUrl.length > 30 ? link.originalUrl.substring(0, 30) + "..." : link.originalUrl}</summary>
+                              <div style={{ padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '12px', marginTop: '8px', fontSize: '0.9rem', wordBreak: 'break-all' }}>
+                                {link.originalUrl}
+                                {link.driveId && <div style={{ color: 'var(--secondary)', marginTop: '8px', fontWeight: 'bold' }}>📍 Google Drive File</div>}
+                              </div>
+                            </details>
+                          </td>
+                          <td style={{ fontSize: '0.9rem', color: isExpired ? 'var(--danger)' : 'inherit' }}>
+                            {link.expiryDate ? new Date(link.expiryDate).toLocaleDateString() : 'Never'}
+                          </td>
+                          <td style={{ textAlign: 'center', fontWeight: '700' }}>{link.clicks}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button className="button small" onClick={() => copyToClipboard(shortUrl)} title="Copy URL">
+                                <CopyIcon />
+                              </button>
+                              <button className="button small" onClick={() => setActiveQrUrl(shortUrl)} title="View QR" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
+                                <QRIcon />
+                              </button>
+                              <button className="button small danger" onClick={() => deleteLink(link.shortCode, link.driveId)} title="Delete Forever">
+                                <DeleteIcon />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
 
       {/* QR Modal */}
       {activeQrUrl && (
         <div className="modal-overlay" onClick={() => setActiveQrUrl(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setActiveQrUrl(null)}>×</button>
-            <h3 style={{ marginBottom: '8px' }}>QR Code</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Scan to open the short link</p>
-            <div className="qr-container">
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', color: '#000' }}>
+            <button className="modal-close" onClick={() => setActiveQrUrl(null)} style={{ color: '#000' }}>×</button>
+            <h3 style={{ marginBottom: '8px', color: '#000' }}>Quick Access QR</h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Anyone can scan this to reach your link.</p>
+            <div className="qr-container" style={{ background: '#f8fafc', padding: '30px', borderRadius: '24px', margin: '24px 0' }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(activeQrUrl)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQrUrl)}`}
                 alt="QR Code"
+                style={{ width: '100%', height: 'auto' }}
               />
             </div>
-            <div className="short-url" style={{ fontSize: '0.9rem', padding: '8px' }}>{activeQrUrl}</div>
-            <div className="modal-actions">
-              <button className="button" onClick={() => copyToClipboard(activeQrUrl)}>
+            <div className="short-url" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>{activeQrUrl}</div>
+            <div className="modal-actions" style={{ marginTop: '24px' }}>
+              <button className="button" onClick={() => copyToClipboard(activeQrUrl)} style={{ background: '#0f172a' }}>
                 <CopyIcon /> Copy Link
               </button>
             </div>
@@ -753,7 +774,7 @@ export default function Home() {
       {loading && (
         <div className="loading">
           <div className="spinner"></div>
-          <p style={{ color: 'var(--text)', fontWeight: '500' }}>{loadingText}</p>
+          <p style={{ color: 'var(--text)', fontWeight: '600', fontSize: '1.1rem' }}>{loadingText}</p>
         </div>
       )}
 
