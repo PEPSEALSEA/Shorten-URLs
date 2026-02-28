@@ -58,6 +58,30 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [activePreset, setActivePreset] = useState("never");
+  const [toasts, setToasts] = useState<{ id: number; type: "success" | "error"; message: string }[]>([]);
+
+  const addToast = useCallback((type: "success" | "error", message: string) => {
+    if (!message) return;
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    if (error) {
+      addToast("error", error);
+      setError("");
+    }
+  }, [error, addToast]);
+
+  useEffect(() => {
+    if (success) {
+      addToast("success", success);
+      setSuccess("");
+    }
+  }, [success, addToast]);
 
   // Form states
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -438,8 +462,6 @@ export default function Home() {
             <p style={{ color: 'var(--text)', fontWeight: '500' }}>{loadingText}</p>
           </div>
         )}
-        {error && <div className="message error">{error}</div>}
-        {success && <div className="message success">{success}</div>}
       </div>
     );
   }
@@ -762,13 +784,12 @@ export default function Home() {
                 )}
               </div>
             </div>
-          )
-          }
-        </div >
-      </main >
+          )}
+        </div>
+      </main>
 
       {/* Mobile Bottom Navigation */}
-      < nav className="mobile-nav" >
+      <nav className="mobile-nav">
         <button
           className={`mobile-nav-item ${mainTab === "create" ? "active" : ""}`}
           onClick={() => setMainTab("create")}
@@ -787,45 +808,56 @@ export default function Home() {
           <span>🚪</span>
           <span>Logout</span>
         </button>
-      </nav >
+      </nav>
 
       {/* QR Modal */}
-      {
-        activeQrUrl && (
-          <div className="modal-overlay" onClick={() => setActiveQrUrl(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', color: '#000' }}>
-              <button className="modal-close" onClick={() => setActiveQrUrl(null)} style={{ color: '#000' }}>×</button>
-              <h3 style={{ marginBottom: '8px', color: '#000' }}>Quick Access QR</h3>
-              <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Anyone can scan this to reach your link.</p>
-              <div className="qr-container" style={{ background: '#f8fafc', padding: '30px', borderRadius: '24px', margin: '24px 0' }}>
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQrUrl)}`}
-                  alt="QR Code"
-                  style={{ width: '100%', height: 'auto' }}
-                />
-              </div>
-              <div className="short-url" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>{activeQrUrl}</div>
-              <div className="modal-actions" style={{ marginTop: '24px' }}>
-                <button className="button" onClick={() => copyToClipboard(activeQrUrl)} style={{ background: '#0f172a' }}>
-                  <CopyIcon /> Copy Link
-                </button>
-              </div>
+      {activeQrUrl && (
+        <div className="modal-overlay" onClick={() => setActiveQrUrl(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', color: '#000' }}>
+            <button className="modal-close" onClick={() => setActiveQrUrl(null)} style={{ color: '#000' }}>×</button>
+            <h3 style={{ marginBottom: '8px', color: '#000' }}>Quick Access QR</h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Anyone can scan this to reach your link.</p>
+            <div className="qr-container" style={{ background: '#f8fafc', padding: '30px', borderRadius: '24px', margin: '24px 0' }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQrUrl)}`}
+                alt="QR Code"
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
+            <div className="short-url" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>{activeQrUrl}</div>
+            <div className="modal-actions" style={{ marginTop: '24px' }}>
+              <button className="button" onClick={() => copyToClipboard(activeQrUrl)} style={{ background: '#0f172a' }}>
+                <CopyIcon /> Copy Link
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
-      {
-        loading && (
-          <div className="loading">
-            <div className="spinner"></div>
-            <p style={{ color: 'var(--text)', fontWeight: '600', fontSize: '1.1rem' }}>{loadingText}</p>
+      {loading && (
+        <div className="loading">
+          <div className="spinner"></div>
+          <p style={{ color: 'var(--text)', fontWeight: '600', fontSize: '1.1rem' }}>{loadingText}</p>
+        </div>
+      )}
+
+      {/* Toast Notification Prefab */}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast ${toast.type}`}>
+            <span className="toast-icon">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </span>
+            <span className="toast-message">{toast.message}</span>
+            <button
+              className="toast-close"
+              onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
+            >
+              ×
+            </button>
           </div>
-        )
-      }
-
-      {error && <div className="message error">{error}</div>}
-      {success && <div className="message success">{success}</div>}
-    </div >
+        ))}
+      </div>
+    </div>
   );
 }
