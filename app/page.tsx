@@ -449,6 +449,11 @@ export default function Home() {
       <aside className="app-sidebar">
         <div className="sidebar-brand">LinkSnap</div>
 
+        {/* Mobile User Avatar */}
+        <div className="mobile-user-info" style={{ display: 'none' }}>
+          <div className="avatar small">{currentUser!.username[0].toUpperCase()}</div>
+        </div>
+
         <nav className="sidebar-nav">
           <button
             className={`nav-item ${mainTab === "create" ? "active" : ""}`}
@@ -748,6 +753,28 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav">
+        <button
+          className={`mobile-nav-item ${mainTab === "create" ? "active" : ""}`}
+          onClick={() => setMainTab("create")}
+        >
+          <span>🔗</span>
+          <span>Shorten</span>
+        </button>
+        <button
+          className={`mobile-nav-item ${mainTab === "manage" ? "active" : ""}`}
+          onClick={() => setMainTab("manage")}
+        >
+          <span>📁</span>
+          <span>Gallery</span>
+        </button>
+        <button className="mobile-nav-item" onClick={logout}>
+          <span>🚪</span>
+          <span>Logout</span>
+        </button>
+      </nav>
 
       {/* QR Modal */}
       {activeQrUrl && (
