@@ -702,9 +702,8 @@ input:hover:not(:focus) {
     margin-top: 0;
 }
 
-/* Pizza Oven Upload Helper */
-/* Pizza Oven Upload Helper */
-.pizza-oven {
+/* File Uploader Upload Helper */
+.file-uploader {
     border: 2px dashed var(--border);
     background: rgba(0, 0, 0, 0.4);
     border-radius: 24px;
@@ -717,41 +716,41 @@ input:hover:not(:focus) {
     margin-bottom: 24px;
 }
 
-.pizza-oven:hover,
-.pizza-oven.dragging {
+.file-uploader:hover,
+.file-uploader.dragging {
     border-color: var(--primary);
     background: rgba(99, 102, 241, 0.05);
     transform: translateY(-4px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-.pizza-oven .icon {
+.file-uploader .icon {
     font-size: 4rem;
     margin-bottom: 1.5rem;
     display: block;
 }
 
-.pizza-oven h3 {
+.file-uploader h3 {
     color: var(--text);
     margin-bottom: 0.8rem;
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.pizza-oven p {
+.file-uploader p {
     color: var(--text-muted);
     font-size: 1rem;
 }
 
-.pizza-oven input[type="file"] {
+.file-uploader input[type="file"] {
     position: absolute;
     inset: 0;
     opacity: 0;
     cursor: pointer;
 }
 
-/* Baking Bar (Progress) */
-.baking-container {
+/* Progress Bar */
+.upload-progress-container {
     margin-top: 2rem;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 16px;
@@ -759,7 +758,7 @@ input:hover:not(:focus) {
     border: 1px solid var(--border);
 }
 
-.baking-status {
+.upload-status {
     display: flex;
     justify-content: space-between;
     margin-bottom: 12px;
@@ -768,91 +767,36 @@ input:hover:not(:focus) {
     color: var(--primary);
 }
 
-.baking-bar-wrapper {
+.progress-bar-wrapper {
     height: 12px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     overflow: hidden;
 }
 
-.baking-bar {
+.progress-bar {
     height: 100%;
     background: var(--grad-primary);
     width: 0%;
     transition: width 0.3s ease;
 }
 
-.pizza-toppings {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.topping {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transform: scale(0);
-}
-
-.topping.active {
-    transform: scale(1);
-}
-
-.topping.pepperoni {
-    background: #ef4444;
-}
-
-.topping.pepper {
-    background: #22c55e;
-}
-
-.topping.olive {
-    background: #1e293b;
-}
-
-.topping.mushroom {
-    background: #e2e8f0;
-    color: #1e293b;
-}
-
-.pizza-box {
-    background: #fff;
-    color: #1e293b;
+.result-card {
+    background: var(--surface);
+    color: var(--text);
     padding: 32px;
     border-radius: 24px;
     margin-top: 3rem;
     position: relative;
-    border-top: 8px solid var(--danger);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.pizza-box::before {
-    content: "HOT & FRESH";
-    position: absolute;
-    top: -16px;
-    right: 30px;
-    background: var(--danger);
-    color: white;
-    padding: 4px 16px;
-    font-size: 0.8rem;
-    font-weight: 900;
-    border-radius: 8px;
-    letter-spacing: 0.05em;
-}
-
-.pizza-box .short-url {
-    background: #f8fafc;
-    border: 2px dashed #e2e8f0;
-    color: #0f172a;
+.result-card .short-url {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    color: var(--primary);
     font-weight: 700;
 }
 

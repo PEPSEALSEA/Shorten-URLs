@@ -213,7 +213,7 @@ export default function Home() {
       let driveId = "";
 
       if (selectedFile) {
-        setLoadingText("Baking your file...");
+        setLoadingText("Preparing your file...");
         setUploadProgress(0);
 
         // Convert file to Base64
@@ -240,13 +240,13 @@ export default function Home() {
           finalUrl = uploadData.url;
           driveId = uploadData.driveId;
           setUploadProgress(100);
-          setSuccess("Pizza is cooked! 🍕 Link ready.");
+          setSuccess("File uploaded! Link ready.");
         } else {
-          throw new Error(uploadData.error || "Baking failed. Oven cooling down...");
+          throw new Error(uploadData.error || "Upload failed. Please try again.");
         }
       }
 
-      setLoadingText("Printing receipt...");
+      setLoadingText("Finalizing link...");
       const bodyParams = new URLSearchParams();
       bodyParams.append("action", "create");
       bodyParams.append("originalUrl", finalUrl);
@@ -531,9 +531,9 @@ export default function Home() {
                       />
                     </div>
                   ) : (
-                    <div className="pizza-oven-wrapper slide-up">
+                    <div className="file-uploader-wrapper slide-up">
                       <div
-                        className={`pizza-oven ${selectedFile ? 'has-file' : ''} ${isDragging ? 'dragging' : ''}`}
+                        className={`file-uploader ${selectedFile ? 'has-file' : ''} ${isDragging ? 'dragging' : ''}`}
                         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                         onDragLeave={() => setIsDragging(false)}
                         onDrop={(e) => {
@@ -543,9 +543,9 @@ export default function Home() {
                           if (file) setSelectedFile(file);
                         }}
                       >
-                        <div className="icon">🍕</div>
-                        <h3>The Pizza Oven</h3>
-                        <p>{selectedFile ? `Selected: ${selectedFile.name}` : "Drop your 'ingredients' (files) here or click to browse"}</p>
+                        <div className="icon">📁</div>
+                        <h3>Upload File</h3>
+                        <p>{selectedFile ? `Selected: ${selectedFile.name}` : "Drop your files here or click to browse"}</p>
                         <input
                           type="file"
                           id="fileInput"
@@ -556,19 +556,13 @@ export default function Home() {
                       </div>
 
                       {uploadProgress > 0 && uploadProgress < 100 && (
-                        <div className="baking-container">
-                          <div className="baking-status">
-                            <span>Baking your file...</span>
+                        <div className="upload-progress-container">
+                          <div className="upload-status">
+                            <span>Uploading file...</span>
                             <span>{uploadProgress}%</span>
                           </div>
-                          <div className="baking-bar-wrapper">
-                            <div className="baking-bar" style={{ width: `${uploadProgress}%` }}></div>
-                          </div>
-                          <div className="pizza-toppings">
-                            <div className={`topping pepperoni ${uploadProgress > 20 ? 'active' : ''}`}>🔘</div>
-                            <div className={`topping pepper ${uploadProgress > 40 ? 'active' : ''}`}>🌿</div>
-                            <div className={`topping mushroom ${uploadProgress > 60 ? 'active' : ''}`}>🍄</div>
-                            <div className={`topping olive ${uploadProgress > 80 ? 'active' : ''}`}>🌑</div>
+                          <div className="progress-bar-wrapper">
+                            <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
                           </div>
                         </div>
                       )}
@@ -577,20 +571,22 @@ export default function Home() {
 
                   {shortUrlResult && (
                     createMode === "file" ? (
-                      <div className="pizza-box">
-                        <h3 style={{ fontSize: '1rem', color: '#1e293b', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span>🍱</span> Your File Link
+                      <div className="result-card">
+                        <h3 style={{ fontSize: '1rem', color: 'var(--text)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>📦</span> Your File Link
                         </h3>
                         <div className="short-url">{shortUrlResult}</div>
-                        <button type="button" className="button" style={{ background: '#ef4444', color: 'white', marginTop: '12px' }} onClick={() => copyToClipboard(shortUrlResult)}>
+                        <button type="button" className="button" style={{ marginTop: '12px' }} onClick={() => copyToClipboard(shortUrlResult)}>
                           <CopyIcon /> Copy Link
                         </button>
                       </div>
                     ) : (
-                      <div className="result">
-                        <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Your Short Link</h3>
+                      <div className="result-card">
+                        <h3 style={{ fontSize: '1rem', color: 'var(--text)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>🔗</span> Your Short Link
+                        </h3>
                         <div className="short-url">{shortUrlResult}</div>
-                        <button type="button" className="button" onClick={() => copyToClipboard(shortUrlResult)}>
+                        <button type="button" className="button" style={{ marginTop: '12px' }} onClick={() => copyToClipboard(shortUrlResult)}>
                           <CopyIcon /> Copy to Clipboard
                         </button>
                       </div>
@@ -664,7 +660,7 @@ export default function Home() {
                   </div>
 
                   <button type="submit" className="button" disabled={loading}>
-                    {createMode === "file" ? 'Cook & Shorten' : 'Shorten Link'}
+                    {createMode === "file" ? 'Upload & Shorten' : 'Shorten Link'}
                   </button>
                 </div>
               </form>
@@ -750,12 +746,13 @@ export default function Home() {
                 )}
               </div>
             </div>
-          )}
-        </div>
-      </main>
+          )
+          }
+        </div >
+      </main >
 
       {/* Mobile Bottom Navigation */}
-      <nav className="mobile-nav">
+      < nav className="mobile-nav" >
         <button
           className={`mobile-nav-item ${mainTab === "create" ? "active" : ""}`}
           onClick={() => setMainTab("create")}
@@ -774,41 +771,45 @@ export default function Home() {
           <span>🚪</span>
           <span>Logout</span>
         </button>
-      </nav>
+      </nav >
 
       {/* QR Modal */}
-      {activeQrUrl && (
-        <div className="modal-overlay" onClick={() => setActiveQrUrl(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', color: '#000' }}>
-            <button className="modal-close" onClick={() => setActiveQrUrl(null)} style={{ color: '#000' }}>×</button>
-            <h3 style={{ marginBottom: '8px', color: '#000' }}>Quick Access QR</h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Anyone can scan this to reach your link.</p>
-            <div className="qr-container" style={{ background: '#f8fafc', padding: '30px', borderRadius: '24px', margin: '24px 0' }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQrUrl)}`}
-                alt="QR Code"
-                style={{ width: '100%', height: 'auto' }}
-              />
-            </div>
-            <div className="short-url" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>{activeQrUrl}</div>
-            <div className="modal-actions" style={{ marginTop: '24px' }}>
-              <button className="button" onClick={() => copyToClipboard(activeQrUrl)} style={{ background: '#0f172a' }}>
-                <CopyIcon /> Copy Link
-              </button>
+      {
+        activeQrUrl && (
+          <div className="modal-overlay" onClick={() => setActiveQrUrl(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', color: '#000' }}>
+              <button className="modal-close" onClick={() => setActiveQrUrl(null)} style={{ color: '#000' }}>×</button>
+              <h3 style={{ marginBottom: '8px', color: '#000' }}>Quick Access QR</h3>
+              <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Anyone can scan this to reach your link.</p>
+              <div className="qr-container" style={{ background: '#f8fafc', padding: '30px', borderRadius: '24px', margin: '24px 0' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQrUrl)}`}
+                  alt="QR Code"
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </div>
+              <div className="short-url" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' }}>{activeQrUrl}</div>
+              <div className="modal-actions" style={{ marginTop: '24px' }}>
+                <button className="button" onClick={() => copyToClipboard(activeQrUrl)} style={{ background: '#0f172a' }}>
+                  <CopyIcon /> Copy Link
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {loading && (
-        <div className="loading">
-          <div className="spinner"></div>
-          <p style={{ color: 'var(--text)', fontWeight: '600', fontSize: '1.1rem' }}>{loadingText}</p>
-        </div>
-      )}
+      {
+        loading && (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p style={{ color: 'var(--text)', fontWeight: '600', fontSize: '1.1rem' }}>{loadingText}</p>
+          </div>
+        )
+      }
 
       {error && <div className="message error">{error}</div>}
       {success && <div className="message success">{success}</div>}
-    </div>
+    </div >
   );
 }
