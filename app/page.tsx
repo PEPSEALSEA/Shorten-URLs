@@ -540,7 +540,15 @@ export default function Home() {
                           e.preventDefault();
                           setIsDragging(false);
                           const file = e.dataTransfer.files?.[0];
-                          if (file) setSelectedFile(file);
+                          if (file) {
+                            setSelectedFile(file);
+                            // Sync with native file input
+                            if (fileInputRef.current) {
+                              const dataTransfer = new DataTransfer();
+                              dataTransfer.items.add(file);
+                              fileInputRef.current.files = dataTransfer.files;
+                            }
+                          }
                         }}
                       >
                         <div className="icon">📁</div>
@@ -551,7 +559,6 @@ export default function Home() {
                           id="fileInput"
                           ref={fileInputRef}
                           onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                          required
                         />
                       </div>
 
@@ -602,8 +609,17 @@ export default function Home() {
                       id="customSlug"
                       placeholder="e.g. my-awesome-link"
                       value={customSlug}
-                      onChange={(e) => setCustomSlug(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const sanitized = val.replace(/\s|%20/g, '-');
+                        setCustomSlug(sanitized);
+                      }}
                     />
+                    {customSlug.includes('-') && (
+                      <div className="slug-warning" style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>⚠️</span> Your link will be <strong>{customSlug}</strong> instead
+                      </div>
+                    )}
                   </div>
 
                   <div className="freshness-card slide-up">
