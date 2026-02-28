@@ -500,3 +500,43 @@ function testUrlValidation() {
     Logger.log(`URL: "${url}" - Valid: ${isValid}`);
   });
 }
+
+/**
+ * Automatically removes expired links from the database.
+ * If a link has an associated Google Drive file, it will also be trashed.
+ * You can set this function to run on a Time-Driven Trigger (e.g., daily).
+ */
+function cleanupExpiredLinks() {
+  try {
+    const sheet = getOrCreateUrlsSheet();
+    const data = sheet.getDataRange().getValues();
+    const now = new Date();
+    let deletedCount = 0;
+    let filesTrashed = 0;
+
+    // Iterate backwards to safely delete rows (starting from the last row)
+    for (let i = data.length - 1; i >= 1; i--) {
+      const expiryDateStr = data[i][5];
+      const driveId = data[i][6];
+
+      // SKIP FILES: File cleanup is handled by the account that owns the files
+      if (driveId) continue;
+
+      if (expiryDateStr) {
+        const expiry = new Date(expiryDateStr);
+        if (expiry < now) {
+          // Delete the row from the sheet
+          sheet.deleteRow(i + 1);
+          deletedCount++;
+        }
+      }
+    }
+
+    const message = 'Cleanup finished. Removed ' + deletedCount + ' expired plain links.';
+    Logger.log(message);
+    return { success: true, message: message, deletedCount: deletedCount, filesTrashed: filesTrashed };
+  } catch (error) {
+    Logger.log('Cleanup error: ' + error.toString());
+    return { success: false, error: error.toString() };
+  }
+}

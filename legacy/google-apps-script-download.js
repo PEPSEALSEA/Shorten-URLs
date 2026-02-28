@@ -7,6 +7,10 @@ const folderId = "1xVX82FFBuH1rp4VwnM2jYdmrRhBu01uw";
 //removed folder not used just remove it
 const removedFolderId = "";
 
+// Database connection (Shared Sheet)
+const SHEET_ID = '1Wxx3TgN2lfJy7lllmPsMEyQ-5b8NsWAWG8_RakYXz54';
+const URLS_SHEET_NAME = 'URLs';
+
 function doGet(e) {
   return createResponse(true, 'Upload service is online');
 }
@@ -66,42 +70,53 @@ function doPost(e) {
     // If request body is a plain string and action is in URL
     var action = params.action || postData.action;
 
-    // --- NEW ARCHIVE ACTION ---
-    if (action === 'archiveFiles') {
+    // --- NEW DELETE ACTION ---
+    if (action === 'deleteFiles' || action === 'archiveFiles') {
       var driveIds = params.driveIds || postData.driveIds;
       if (typeof driveIds === 'string') {
         try { driveIds = JSON.parse(driveIds); } catch (e) { driveIds = driveIds.split(','); }
       }
 
       if (!Array.isArray(driveIds) || driveIds.length === 0) {
-        return createResponse(false, 'No driveIds provided for archiving');
+        return createResponse(false, 'No driveIds provided');
       }
 
-      var archivedList = [];
+      var processedList = [];
       var errorList = [];
-      var destFolder = DriveApp.getFolderById(removedFolderId);
+
+      // If archive is requested, try to get folder, else default to trashing
+      var destFolder = null;
+      if (action === 'archiveFiles' && removedFolderId) {
+        try { destFolder = DriveApp.getFolderById(removedFolderId); } catch (e) { }
+      }
 
       for (var i = 0; i < driveIds.length; i++) {
         var id = driveIds[i];
         try {
           var file = DriveApp.getFileById(id);
-          // Move file: add to new folder and remove from old folders
-          destFolder.addFile(file);
-          var parents = file.getParents();
-          while (parents.hasNext()) {
-            var p = parents.next();
-            if (p.getId() !== removedFolderId) {
-              p.removeFile(file);
+
+          if (destFolder && action === 'archiveFiles') {
+            // Move file to archive folder
+            destFolder.addFile(file);
+            var parents = file.getParents();
+            while (parents.hasNext()) {
+              var p = parents.next();
+              if (p.getId() !== removedFolderId) {
+                p.removeFile(file);
+              }
             }
+          } else {
+            // Default behavior: move to Trash
+            file.setTrashed(true);
           }
-          archivedList.push(id);
+          processedList.push(id);
         } catch (err) {
           errorList.push({ id: id, error: err.toString() });
         }
       }
 
-      return createResponse(true, 'Archived ' + archivedList.length + ' files', {
-        archivedCount: archivedList.length,
+      return createResponse(true, 'Successfully processed ' + processedList.length + ' files', {
+        count: processedList.length,
         errors: errorList
       });
     }
@@ -375,6 +390,52 @@ function createResponse(success, message, data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+
+/**
+ * BACKGROUND TASK: Specialized for File Cleanup
+ * Finds expired links in the sheet that HAVE a Drive ID and trashes the files.
+ * NOTE: Ensure this email has "Editor" access to the Google Sheet.
+ */
+function cleanupExpiredFiles() {
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = spreadsheet.getSheetByName(URLS_SHEET_NAME);
+    if (!sheet) return;
+
+    const data = sheet.getDataRange().getValues();
+    const now = new Date();
+    let deletedCount = 0;
+
+    // Iterate backwards
+    for (let i = data.length - 1; i >= 1; i--) {
+      const expiryDateStr = data[i][5];
+      const driveId = data[i][6];
+
+      // ONLY PROCESS FILES: Links without files are handled by the other script
+      if (!driveId) continue;
+
+      if (expiryDateStr) {
+        const expiry = new Date(expiryDateStr);
+        if (expiry < now) {
+          try {
+            // Delete the file from this account's Drive
+            DriveApp.getFileById(driveId).setTrashed(true);
+          } catch (e) {
+            Logger.log('File already gone or error: ' + driveId);
+          }
+
+          // Remove entry from sheet
+          sheet.deleteRow(i + 1);
+          deletedCount++;
+        }
+      }
+    }
+
+    Logger.log('Cleaned up ' + deletedCount + ' expired files.');
+  } catch (error) {
+    Logger.log('Backup Cleanup Error: ' + error.toString());
+  }
+}
 
 function downloadImageToDrive() {
   const imageUrl = "https://picsum.photos/800/600";

@@ -327,7 +327,7 @@ export default function Home() {
         setLoadingText("Removing file...");
         await optimizedFetch(uploadEndpoint, {
           method: "POST",
-          body: `action=archiveFiles&driveIds=${JSON.stringify([driveId])}`,
+          body: `action=deleteFiles&driveIds=${JSON.stringify([driveId])}`,
         });
       }
 
